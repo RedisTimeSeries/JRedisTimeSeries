@@ -6,7 +6,6 @@ import java.util.Map;
 import redis.clients.jedis.BinaryClient;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.Protocol;
-import redis.clients.jedis.commands.ProtocolCommand;
 import redis.clients.jedis.exceptions.JedisDataException;
 import redis.clients.jedis.util.Pool;
 import redis.clients.jedis.util.SafeEncoder;
@@ -91,19 +90,19 @@ public class RedisTimeSeries {
     } catch(JedisDataException ex ) {
       throw new RedisTimeSeriesException(ex);
     }
-
   }
   
   /**
    * TS.RANGE key FROM_TIMESTAMP TO_TIMESTAMP [aggregationType] [bucketSizeSeconds]
    * 
+   * @param key
    * @param from
    * @param to
    * @param aggregation
    * @param bucketSizeSeconds
    * @return
    */
-  public Value[] range(long from, long to, Aggregation aggregation, long bucketSizeSeconds) {
+  public Value[] range(String key, long from, long to, Aggregation aggregation, long bucketSizeSeconds) {
     return new Value[0];
   }
   
