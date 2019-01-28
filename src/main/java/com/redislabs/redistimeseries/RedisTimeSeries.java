@@ -4,6 +4,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.redislabs.redistimeseries.information.Info;
+import com.redislabs.redistimeseries.information.Rule;
+
 import redis.clients.jedis.BinaryClient;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.Protocol;
@@ -171,8 +174,37 @@ public class RedisTimeSeries {
    * @param key
    * @return
    */
-  public Map<String, Long> info(String key) {
-    return new HashMap<>();
+  public Info info(String key) {
+    try (Jedis conn = getConnection()) {
+      List<Object> resp = sendCommand(conn, Command.INFO, SafeEncoder.encode(key))
+          .getObjectMultiBulkReply();
+
+      Map<String, Long> properties = new HashMap<>();
+      Map<String, String> labels = new HashMap<>();
+      Map<String, Rule> rules = new HashMap<>();
+      for(int i=0; i<resp.size() ; i+=2) {
+        String prop = SafeEncoder.encode((byte[])resp.get(i));
+        Object value = resp.get(i+1);
+        if(value instanceof Long) {
+          properties.put(prop, (Long)value);
+        } else {
+          if(prop.equals("labels")) {
+            List<Object> labelsList = (List<Object>)value;
+            for(int j=0; j<labelsList.size() ; j+=2) {
+              labels.put( SafeEncoder.encode((byte[])labelsList.get(j)), SafeEncoder.encode((byte[])labelsList.get(j+1)));
+            }
+          } else if(prop.equals("rules") ) {
+//            List<Object> rulesList = (List<Object>)value;
+//            for(int j=0; j<labelsList.size() ; j+=2) {
+//              labels.put( SafeEncoder.encode((byte[])labelsList.get(j)), SafeEncoder.encode((byte[])labelsList.get(j+1)));
+//            }
+          } 
+        }
+      }
+      return new Info(properties, labels, rules);
+    } catch(JedisDataException ex ) {
+      throw new RedisTimeSeriesException(ex);
+    }
   }
   
   private Jedis getConnection() {

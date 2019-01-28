@@ -85,6 +85,22 @@ public class RedisTimeSeriesTest {
       // Error on creating same rule twice
     }
   }
+  
+  @Test
+  public void testInfo() {
+    Assert.assertTrue(client.create("seriesInfo", 10/*retentionSecs*/, 10/*maxSamplesPerChunk*/));   
+//    Assert.assertTrue(client.incrBy("seriesIncDec", 3.2, true, 1));
+//    Assert.assertTrue(client.decrBy("seriesIncDec", 2.1, true, 1));
+
+    client.info("seriesInfo");
+    
+    try {
+      client.info("seriesInfo1");
+      Assert.fail();
+    } catch(RedisTimeSeriesException e) {
+      // Error on creating same rule twice
+    }
+  }
 
 
 }
