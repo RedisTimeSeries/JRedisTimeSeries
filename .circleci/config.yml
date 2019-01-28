@@ -37,6 +37,6 @@ jobs:
         
       # run tests!
       - run: |
-        mvn integration-test
+          mvn integration-test
           
      # - run: mvn -s .circleci.settings.xml -DskipTests deploy
