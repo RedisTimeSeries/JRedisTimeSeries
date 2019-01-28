@@ -6,7 +6,7 @@ version: 2
 jobs:
   build:
     docker:
-      - image: circleci/openjdk:8-jdk
+      - image: circleci/openjdk:8u171-jdk
       
       - image: redislabs/redisgraph:edge
         port: 6379:6379
@@ -36,7 +36,7 @@ jobs:
           key: v1-dependencies-{{ checksum "pom.xml" }}
         
       # run tests!
-     # - run: |
-     #     mvn integration-test
+      - run: |
+        mvn integration-test
           
      # - run: mvn -s .circleci.settings.xml -DskipTests deploy
