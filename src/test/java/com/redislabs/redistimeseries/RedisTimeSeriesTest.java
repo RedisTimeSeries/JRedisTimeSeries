@@ -51,35 +51,40 @@ public class RedisTimeSeriesTest {
     Assert.assertTrue(client.createRule("source", Aggregation.COUNT, 100, "dest"));
   }
   
-//  @Test
-//  public void testAdd() {
-//    Assert.assertTrue(client.create("seriesAdd", 10/*retentionSecs*/, 10/*maxSamplesPerChunk*/));
- //   
- //   Assert.assertTrue(client.add("seriesAdd", 1000L, 1.1));
- //   
-//    try {
-//      Assert.assertTrue(client.add("seriesAdd", 800L, 1.1));
-//      Assert.fail();
-//    } catch(RedisTimeSeriesException e) {
-//      // Error on creating same rule twice
-//    }
-//  }
+  @Test
+  public void testAdd() {
+    Assert.assertTrue(client.create("seriesAdd", 10/*retentionSecs*/, 10/*maxSamplesPerChunk*/));
+    
+    Assert.assertTrue(client.add("seriesAdd", 1000L, 1.1));
+    Assert.assertTrue(client.add("seriesAdd", 3000L, 3.2));
+    
+    Value[] values = client.range("seriesAdd", 500L, 4000L, Aggregation.COUNT, 1);
+    Assert.assertEquals(2, values.length);
+    
+    Assert.assertEquals( new Value(1000, 1), values[0]);
+    Assert.assertEquals( new Value(3000, 1), values[1]);
+    
+    try {
+      Assert.assertTrue(client.add("seriesAdd", 800L, 1.1));
+      Assert.fail();
+    } catch(RedisTimeSeriesException e) {
+      // Error on creating same rule twice
+    }
+  }
   
-//  @Test
-//  public void testIncDec() {
-//    Assert.assertTrue(client.create("seriesIncDec", 10/*retentionSecs*/, 10/*maxSamplesPerChunk*/));
-//    
+  @Test
+  public void testIncDec() {
+    Assert.assertTrue(client.create("seriesIncDec", 10/*retentionSecs*/, 10/*maxSamplesPerChunk*/));   
 //    Assert.assertTrue(client.incrBy("seriesIncDec", 3.2, true, 1));
-//    Assert.assertTrue(client.incrBy("seriesIncDec", 2.1, true, 1));
-//    Assert.assertTrue(client.add("seriesIncDec", 1000L, 1.1));
-//    
-//    try {
- //     Assert.assertTrue(client.add("seriesIncDec", 800L, 1.1));
-//      Assert.fail();
- //   } catch(RedisTimeSeriesException e) {
-//      // Error on creating same rule twice
- //   }
-//  }
+//    Assert.assertTrue(client.decrBy("seriesIncDec", 2.1, true, 1));
+
+    try {
+      client.incrBy("seriesIncDec1", 3.2, true, 1);
+      Assert.fail();
+    } catch(RedisTimeSeriesException e) {
+      // Error on creating same rule twice
+    }
+  }
 
 
 }

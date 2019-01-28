@@ -1,6 +1,7 @@
 package com.redislabs.redistimeseries;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import redis.clients.jedis.BinaryClient;
@@ -103,7 +104,21 @@ public class RedisTimeSeries {
    * @return
    */
   public Value[] range(String key, long from, long to, Aggregation aggregation, long bucketSizeSeconds) {
-    return new Value[0];
+    try (Jedis conn = getConnection()) {
+      List<Object> range = sendCommand(conn, Command.RANGE, SafeEncoder.encode(key), Protocol.toByteArray(from), 
+          Protocol.toByteArray(to), aggregation.getRaw(), Protocol.toByteArray(bucketSizeSeconds))
+      .getObjectMultiBulkReply();
+
+      Value[] values = new Value[range.size()];
+      
+      for(int i=0; i<values.length ; ++i) {
+        List<Object> touple = (List<Object>)range.get(i);
+        values[i] = new Value((Long)touple.get(0), Double.parseDouble(SafeEncoder.encode((byte[])touple.get(1))));
+      }
+      return values;
+    } catch(JedisDataException ex ) {
+      throw new RedisTimeSeriesException(ex);
+    }
   }
   
   /**
@@ -117,9 +132,14 @@ public class RedisTimeSeries {
    */
   public boolean incrBy(String key, double value, boolean reset, long timeBucket) {
     try (Jedis conn = getConnection()) {
-      return sendCommand(conn, Command.INCRBY, SafeEncoder.encode(key),  
-          Protocol.toByteArray(value), Protocol.toByteArray(reset),  Protocol.toByteArray(timeBucket))
-      .getStatusCodeReply().equals("OK");
+      return (reset ? 
+          sendCommand(conn, Command.INCRBY, SafeEncoder.encode(key), 
+              Protocol.toByteArray(value), SafeEncoder.encode("RESET"),  Protocol.toByteArray(timeBucket)) 
+          : sendCommand(conn, Command.INCRBY, SafeEncoder.encode(key),  
+              Protocol.toByteArray(value), Protocol.toByteArray(reset),  Protocol.toByteArray(timeBucket)))
+          .getStatusCodeReply().equals("OK");
+    } catch(JedisDataException ex ) {
+      throw new RedisTimeSeriesException(ex);
     }
   }
   
@@ -134,11 +154,15 @@ public class RedisTimeSeries {
    */
   public boolean decrBy(String key, double value, boolean reset, long timeBucket) {
     try (Jedis conn = getConnection()) {
-      return sendCommand(conn, Command.DECRBY, SafeEncoder.encode(key),  
-          Protocol.toByteArray(value), Protocol.toByteArray(reset),  Protocol.toByteArray(timeBucket))
-      .getStatusCodeReply().equals("OK");
+      return (reset ? 
+          sendCommand(conn, Command.DECRBY, SafeEncoder.encode(key), 
+              Protocol.toByteArray(value), SafeEncoder.encode("RESET"),  Protocol.toByteArray(timeBucket)) 
+          : sendCommand(conn, Command.DECRBY, SafeEncoder.encode(key),  
+              Protocol.toByteArray(value), Protocol.toByteArray(reset),  Protocol.toByteArray(timeBucket)))
+          .getStatusCodeReply().equals("OK");
+    } catch(JedisDataException ex ) {
+      throw new RedisTimeSeriesException(ex);
     }
-
   }
   
   /**
