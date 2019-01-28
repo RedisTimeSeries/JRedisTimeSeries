@@ -5,16 +5,12 @@
 version: 2
 jobs:
   build:
-    machine:
-      image: circleci/classic:latest
-    # docker:
-      # specify the version you desire here      
+    docker:
+      - image: circleci/openjdk:8u171-jdk
       
-      # Specify service dependencies here if necessary
-      # CircleCI maintains a library of pre-built images
-      # documented at https://circleci.com/docs/2.0/circleci-images/
-      # - image: circleci/postgres:9.4
-
+      - image: redislabs/redisgraph:edge
+        port: 6379:6379
+      
     working_directory: ~/repo
 
     environment:
@@ -41,16 +37,6 @@ jobs:
         
       # run tests!
       - run: |
-          docker run -d -p 6379:6379 -it --rm --name redistimeseries redislabs/redistimeseries
           mvn integration-test
           
-      - run: mvn -s .circleci.settings.xml -DskipTests deploy
-
-workflows:
-  version: 2
-  build:
-    jobs:
-      - build:
-          filters:
-            tags:
-              only: /.*/
+     # - run: mvn -s .circleci.settings.xml -DskipTests deploy
