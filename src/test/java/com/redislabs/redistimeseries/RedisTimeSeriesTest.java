@@ -49,6 +49,13 @@ public class RedisTimeSeriesTest {
     
     Assert.assertTrue(client.deleteRule("source", "dest"));
     Assert.assertTrue(client.createRule("source", Aggregation.COUNT, 100, "dest"));
+    
+    try {
+      Assert.assertTrue(client.deleteRule("source", "dest1"));
+      Assert.fail();
+    } catch(RedisTimeSeriesException e) {
+      // Error on creating same rule twice
+    }
   }
   
   @Test
@@ -70,6 +77,13 @@ public class RedisTimeSeriesTest {
     } catch(RedisTimeSeriesException e) {
       // Error on creating same rule twice
     }
+    
+    try {
+      client.range("seriesAdd1", 500L, 4000L, Aggregation.COUNT, 1);
+      Assert.fail();
+    } catch(RedisTimeSeriesException e) {
+      // Error on creating same rule twice
+    }
   }
   
   @Test
@@ -84,6 +98,14 @@ public class RedisTimeSeriesTest {
     } catch(RedisTimeSeriesException e) {
       // Error on creating same rule twice
     }
+    
+    try {
+      client.decrBy("seriesIncDec1", 3.2, true, 1);
+      Assert.fail();
+    } catch(RedisTimeSeriesException e) {
+      // Error on creating same rule twice
+    }
+
   }
   
   @Test
