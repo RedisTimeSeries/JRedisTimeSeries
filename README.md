@@ -6,3 +6,38 @@
 
 # JRedisTimeSeries
 Java Client for RedisTimeSeries
+
+### Official Releases
+
+```xml
+  <dependencies>
+    <dependency>
+      <groupId>com.redislabs</groupId>
+      <artifactId>jredistimeseries</artifactId>
+      <version>0.0.1</version>
+    </dependency>
+  </dependencies>
+```
+
+### Snapshots
+
+```xml
+  <repositories>
+    <repository>
+      <id>snapshots-repo</id>
+      <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+    </repository>
+  </repositories>
+```
+
+and
+
+```xml
+  <dependencies>
+    <dependency>
+      <groupId>com.redislabs</groupId>
+      <artifactId>jredistimeseries</artifactId>
+      <version>0.1.0-SNAPSHOT</version>
+    </dependency>
+  </dependencies>
+```
