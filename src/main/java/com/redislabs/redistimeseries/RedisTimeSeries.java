@@ -89,7 +89,7 @@ public class RedisTimeSeries {
   public boolean add(String sourceKey, long timestamp, double value) {
     try (Jedis conn = getConnection()) {
       return sendCommand(conn, Command.ADD, SafeEncoder.encode(sourceKey),  
-          Protocol.toByteArray(timestamp),  Protocol.toByteArray(value))
+          timestamp>0? Protocol.toByteArray(timestamp) :  SafeEncoder.encode("*"),  Protocol.toByteArray(value))
       .getStatusCodeReply().equals("OK");
     } catch(JedisDataException ex ) {
       throw new RedisTimeSeriesException(ex);
