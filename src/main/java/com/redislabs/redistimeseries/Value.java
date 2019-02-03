@@ -3,18 +3,18 @@ package com.redislabs.redistimeseries;
 public class Value {
 
   private final long time;
-  private final double value;
+  private final double val;
   
   public Value(long time, double value) {
     this.time = time;
-    this.value = value;
+    this.val = value;
   }
   
   public long getTime() {
     return time;
   }
   public double getValue() {
-    return value;
+    return val;
   }
   
   @Override
@@ -23,11 +23,11 @@ public class Value {
         return false;
     
     Value other = (Value)o;
-    return other.time == this.time && other.value == this.value;
+    return other.time == this.time && other.val == this.val;
   }
   
   @Override
   public int hashCode() {
-    return Long.hashCode(time ) ^ Double.hashCode(value);
+    return Long.hashCode(time ) ^ Double.hashCode(val);
   }
 }

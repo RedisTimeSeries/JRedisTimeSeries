@@ -133,7 +133,7 @@ public class RedisTimeSeries {
    * @param timeBucket
    * @return
    */
-  public boolean incrBy(String key, double value, boolean reset, long timeBucket) {
+  public boolean incrBy(String key, int value, boolean reset, long timeBucket) {
     try (Jedis conn = getConnection()) {
       return (reset ? 
           sendCommand(conn, Command.INCRBY, SafeEncoder.encode(key), 
@@ -155,7 +155,7 @@ public class RedisTimeSeries {
    * @param timeBucket
    * @return
    */
-  public boolean decrBy(String key, double value, boolean reset, long timeBucket) {
+  public boolean decrBy(String key, int value, boolean reset, long timeBucket) {
     try (Jedis conn = getConnection()) {
       return (reset ? 
           sendCommand(conn, Command.DECRBY, SafeEncoder.encode(key), 

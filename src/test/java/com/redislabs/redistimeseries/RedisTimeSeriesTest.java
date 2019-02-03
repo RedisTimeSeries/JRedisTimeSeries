@@ -4,6 +4,9 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
+import com.redislabs.redistimeseries.information.Info;
+import com.redislabs.redistimeseries.information.Rule;
+
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
 
@@ -89,23 +92,27 @@ public class RedisTimeSeriesTest {
   @Test
   public void testIncDec() {
     Assert.assertTrue(client.create("seriesIncDec", 10/*retentionSecs*/, 10/*maxSamplesPerChunk*/));   
-//    Assert.assertTrue(client.incrBy("seriesIncDec", 3.2, true, 1));
-//    Assert.assertTrue(client.decrBy("seriesIncDec", 2.1, true, 1));
+    Assert.assertTrue(client.add("seriesIncDec", 1000L, 1));
+    Assert.assertTrue(client.incrBy("seriesIncDec", 3, true, 10));
+    Assert.assertTrue(client.decrBy("seriesIncDec", 2, true, 10));
+    
+    Value[] values = client.range("seriesIncDec", 0L, Long.MAX_VALUE, Aggregation.COUNT, 10);   
+    Assert.assertEquals( 3, values[0].getValue(), 0);
+    Assert.assertEquals( 5, values[1].getValue(), 0);
 
     try {
-      client.incrBy("seriesIncDec1", 3.2, true, 1);
+      client.incrBy("seriesIncDec1", 3, true, 1);
       Assert.fail();
     } catch(RedisTimeSeriesException e) {
       // Error on creating same rule twice
     }
     
     try {
-      client.decrBy("seriesIncDec1", 3.2, true, 1);
+      client.decrBy("seriesIncDec1", 3, true, 1);
       Assert.fail();
     } catch(RedisTimeSeriesException e) {
       // Error on creating same rule twice
     }
-
   }
   
   @Test
@@ -114,7 +121,15 @@ public class RedisTimeSeriesTest {
 //    Assert.assertTrue(client.incrBy("seriesIncDec", 3.2, true, 1));
 //    Assert.assertTrue(client.decrBy("seriesIncDec", 2.1, true, 1));
 
-    client.info("seriesInfo");
+    Info info = client.info("seriesInfo");
+    Assert.assertEquals( "", info.getProperty(""));
+    Assert.assertEquals( "", info.getLabel(""));
+    Rule rule = info.getRule("");
+    Assert.assertEquals( "", rule);
+    Assert.assertEquals( "", rule.getTarget());
+    Assert.assertEquals( "", rule.getValue());
+    Assert.assertEquals( Aggregation.AVG, rule.getAggregation());
+
     
     try {
       client.info("seriesInfo1");
