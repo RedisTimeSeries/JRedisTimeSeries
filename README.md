@@ -41,3 +41,18 @@ and
     </dependency>
   </dependencies>
 ```
+
+
+# Example: Using the Java Client
+
+```java
+   Pool<Jedis> pool = ...
+   RedisTimeSeries rts = new RedisTimeSeries(pool);
+   
+   rts.create("cpu1", 60*10 /*10min*/, 100, null);
+   
+   rts.create("cpu1-avg", 60*10 /*10min*/, 100, null);
+   rts.createRule("cpu1", Aggregation.AVG, 60 /*1min*/, "cpu1-avg");
+   
+   rts.add("cpu1", -1 /*server time*/, 80, null);
+```
