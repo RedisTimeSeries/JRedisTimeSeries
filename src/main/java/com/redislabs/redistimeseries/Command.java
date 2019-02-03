@@ -7,6 +7,7 @@ public enum Command implements ProtocolCommand{
 
     CREATE("TS.CREATE"),
     RANGE("TS.RANGE"),
+    RANGEBYLABELS("TS.RANGEBYLABELS"),
     CREATE_RULE("TS.CREATERULE"),
     DELETE_RULE("TS.DELETERULE"),
     ADD("TS.ADD"),
