@@ -1,7 +1,5 @@
 package com.redislabs.redistimeseries;
 
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -280,12 +278,13 @@ public class RedisTimeSeries {
             for(int j=0; j<labelsList.size() ; j+=2) {
               labels.put( SafeEncoder.encode((byte[])labelsList.get(j)), SafeEncoder.encode((byte[])labelsList.get(j+1)));
             }
-          } else if(prop.equals("rules") ) {
+          }
+//       TODO   else if(prop.equals("rules") ) {
 //            List<Object> rulesList = (List<Object>)value;
 //            for(int j=0; j<labelsList.size() ; j+=2) {
 //              labels.put( SafeEncoder.encode((byte[])labelsList.get(j)), SafeEncoder.encode((byte[])labelsList.get(j+1)));
 //            }
-          } 
+//          } 
         }
       }
       return new Info(properties, labels, rules);

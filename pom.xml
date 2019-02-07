@@ -41,7 +41,7 @@
 		<connection>scm:git:git@github.com:RedisTimeSeries/JRedisTimeSeries.git</connection>
 		<url>scm:git:git@github.com:RedisTimeSeries/JRedisTimeSeries.git</url>
 		<developerConnection>scm:git:git@github.com:RedisTimeSeries/JRedisTimeSeries.git</developerConnection>
-		<!-- tag>v1.0.0</tag-->
+		<!-- tag>v1.0.0</tag -->
 	</scm>
 
 	<dependencies>
@@ -196,6 +196,11 @@
 						</goals>
 					</execution>
 				</executions>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-pmd-plugin</artifactId>
+				<version>3.11.0</version>
 			</plugin>
 		</plugins>
 	</build>
