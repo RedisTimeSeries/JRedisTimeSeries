@@ -22,26 +22,87 @@ public class RedisTimeSeries {
   public RedisTimeSeries(Pool<Jedis> pool) {
     this.pool = pool;
   }
+
+
+  /**
+   * TS.CREATE key
+   * 
+   * @param key
+   * @return
+   */
+  public boolean create(String key){   
+    try (Jedis conn = getConnection()) {      
+      return sendCommand(conn, Command.CREATE, SafeEncoder.encode(key)).getStatusCodeReply().equals("OK");
+    } catch(JedisDataException ex ) {
+      throw new RedisTimeSeriesException(ex);
+    }
+  }
+
   
   /**
-   * TS.CREATE KEY [retentionSecs] [maxSamplesPerChunk]
+   * TS.CREATE key [RETENTION retentionSecs]
+   * 
+   * @param key
+   * @param retentionSecs
+   * @return
+   */
+  public boolean create(String key, long retentionSecs){   
+    try (Jedis conn = getConnection()) {
+      return sendCommand(conn, Command.CREATE, SafeEncoder.encode(key), Keyword.RETENTION.getRaw(), Protocol.toByteArray(retentionSecs))
+          .getStatusCodeReply().equals("OK");
+    } catch(JedisDataException ex ) {
+      throw new RedisTimeSeriesException(ex);
+    }
+  }
+
+  /**
+   * TS.CREATE key [LABELS field value..]
+   * 
+   * @param key
+   * @param maxSamplesPerChunk
+   * @return
+   */
+  public boolean create(String key, Map<String, String> labels){   
+    try (Jedis conn = getConnection()) {
+
+      byte[][] args = new byte[1 + (labels==null ? 0 : labels.size()+1)][];
+      int i=0;
+
+      args[i++] = SafeEncoder.encode(key);
+      if(labels != null) {
+        args[i++] = Keyword.LABELS.getRaw();
+        for(Entry<String, String> e : labels.entrySet()) {
+          args[i++] = SafeEncoder.encode(e.toString());  
+        }
+      }
+      
+      return sendCommand(conn, Command.CREATE, args).getStatusCodeReply().equals("OK");
+    } catch(JedisDataException ex ) {
+      throw new RedisTimeSeriesException(ex);
+    }
+  }
+
+  
+  /**
+   * TS.CREATE key [RETENTION retentionSecs] [LABELS field value..]
    * 
    * @param key
    * @param retentionSecs
    * @param maxSamplesPerChunk
    * @return
    */
-  public boolean create(String key, long retentionSecs, long maxSamplesPerChunk, Map<String, String> labels){   
+  public boolean create(String key, long retentionSecs, Map<String, String> labels){   
     try (Jedis conn = getConnection()) {
 
-      byte[][] args = new byte[3 + (labels==null ? 0 : labels.size())][];
-      
+      byte[][] args = new byte[3 + (labels==null ? 0 : labels.size()+1)][];
       int i=0;
+      
       args[i++] = SafeEncoder.encode(key);
+      args[i++] = Keyword.RETENTION.getRaw();
       args[i++] = Protocol.toByteArray(retentionSecs);
-      args[i++] = Protocol.toByteArray(maxSamplesPerChunk);
       
       if(labels != null) {
+        args[i++] = Keyword.LABELS.getRaw();
         for(Entry<String, String> e : labels.entrySet()) {
           args[i++] = SafeEncoder.encode(e.toString());  
         }
@@ -55,7 +116,7 @@ public class RedisTimeSeries {
   
 
   /**
-   * TS.CREATERULE SOURCE_KEY AGG_TYPE BUCKET_SIZE_SEC DEST_KEY
+   * TS.CREATERULE sourceKey destKey AGGREGATION aggType bucketSizeSeconds
    * 
    * @param sourceKey
    * @param aggregation
@@ -65,8 +126,8 @@ public class RedisTimeSeries {
    */
   public boolean createRule(String sourceKey, Aggregation aggregation, long bucketSize, String destKey) {
     try (Jedis conn = getConnection()) {
-      return sendCommand(conn, Command.CREATE_RULE, SafeEncoder.encode(sourceKey), aggregation.getRaw(), 
-          Protocol.toByteArray(bucketSize),  SafeEncoder.encode(destKey))
+      return sendCommand(conn, Command.CREATE_RULE, SafeEncoder.encode(sourceKey), SafeEncoder.encode(destKey), 
+          Keyword.AGGREGATION.getRaw(), aggregation.getRaw(), Protocol.toByteArray(bucketSize))
       .getStatusCodeReply().equals("OK");
     } catch(JedisDataException ex ) {
       throw new RedisTimeSeriesException(ex);
@@ -90,9 +151,46 @@ public class RedisTimeSeries {
     }
 
   }
+
   
   /**
-   * TS.ADD key [labels] timestamp value
+   * TS.ADD key timestamp value
+   * 
+   * @param sourceKey
+   * @param timestamp
+   * @param value
+   * @return
+   */
+  public boolean add(String sourceKey, long timestamp, double value) {
+    try (Jedis conn = getConnection()) {
+      return sendCommand(conn, Command.ADD, SafeEncoder.encode(sourceKey), (timestamp>0 ? Protocol.toByteArray(timestamp) :  SafeEncoder.encode("*")), Protocol.toByteArray(value))
+          .getStatusCodeReply().equals("OK");
+    } catch(JedisDataException ex ) {
+      throw new RedisTimeSeriesException(ex);
+    }
+  }
+  
+  /**
+   * TS.ADD key timestamp value [RETENTION retentionSecs]
+   * 
+   * @param sourceKey
+   * @param timestamp
+   * @param value
+   * @param retentionSecs
+   * @return
+   */
+  public boolean add(String sourceKey, long timestamp, double value, long retentionSecs) {
+    try (Jedis conn = getConnection()) {
+      return sendCommand(conn, Command.ADD, SafeEncoder.encode(sourceKey), (timestamp>0 ? Protocol.toByteArray(timestamp) :  SafeEncoder.encode("*")),
+          Protocol.toByteArray(value), Keyword.RETENTION.getRaw(), Protocol.toByteArray(retentionSecs))
+          .getStatusCodeReply().equals("OK");
+    } catch(JedisDataException ex ) {
+      throw new RedisTimeSeriesException(ex);
+    }
+  }
+
+  /**
+   * TS.ADD key timestamp value [RETENTION retentionSecs] [LABELS field value..]
    * 
    * @param sourceKey
    * @param timestamp
@@ -103,28 +201,89 @@ public class RedisTimeSeries {
   public boolean add(String sourceKey, long timestamp, double value, Map<String, String> labels) {
     try (Jedis conn = getConnection()) {
 
-      byte[][] args = new byte[3 + (labels==null ? 0 : labels.size())][];
-      
+      byte[][] args = new byte[3 + (labels==null ? 0 : labels.size()+1)][];
       int i=0;
+      
       args[i++] = SafeEncoder.encode(sourceKey);
+      args[i++] = timestamp>0 ? Protocol.toByteArray(timestamp) :  SafeEncoder.encode("*");
+      args[i++] = Protocol.toByteArray(value);
       
       if(labels != null) {
+        args[i++] = Keyword.LABELS.getRaw();
         for(Entry<String, String> e : labels.entrySet()) {
           args[i++] = SafeEncoder.encode(e.toString());  
         }
       }
-      
-      args[i++] = timestamp>0? Protocol.toByteArray(timestamp) :  SafeEncoder.encode("*");
-      args[i++] = Protocol.toByteArray(value);
       
       return sendCommand(conn, Command.ADD, args).getStatusCodeReply().equals("OK");
     } catch(JedisDataException ex ) {
       throw new RedisTimeSeriesException(ex);
     }
   }
+
+  /**
+   * TS.ADD key timestamp value [RETENTION retentionSecs] [LABELS field value..]
+   * 
+   * @param sourceKey
+   * @param timestamp
+   * @param value
+   * @param retentionSecs
+   * @param labels
+   * @return
+   */
+  public boolean add(String sourceKey, long timestamp, double value, long retentionSecs, Map<String, String> labels) {
+    try (Jedis conn = getConnection()) {
+
+      byte[][] args = new byte[5 + (labels==null ? 0 : labels.size()+1)][];
+      int i=0;
+      
+      args[i++] = SafeEncoder.encode(sourceKey);
+      args[i++] = timestamp>0 ? Protocol.toByteArray(timestamp) :  SafeEncoder.encode("*");
+      args[i++] = Protocol.toByteArray(value);
+      args[i++] = Keyword.RETENTION.getRaw();
+      args[i++] = Protocol.toByteArray(retentionSecs);
+      
+      if(labels != null) {
+        args[i++] = Keyword.LABELS.getRaw();
+        for(Entry<String, String> e : labels.entrySet()) {
+          args[i++] = SafeEncoder.encode(e.toString());  
+        }
+      }
+      
+      return sendCommand(conn, Command.ADD, args).getStatusCodeReply().equals("OK");
+    } catch(JedisDataException ex ) {
+      throw new RedisTimeSeriesException(ex);
+    }
+  }
+
   
   /**
-   * TS.RANGE key fromTimestamp toTimestamp [aggregationType] [bucketSizeSeconds]
+   * TS.RANGE key fromTimestamp toTimestamp
+   * 
+   * @param key
+   * @param from
+   * @param to
+   * @return
+   */
+  public Value[] range(String key, long from, long to) {
+    try (Jedis conn = getConnection()) {
+      List<Object> range = sendCommand(conn, Command.RANGE, SafeEncoder.encode(key), Protocol.toByteArray(from), Protocol.toByteArray(to))
+      .getObjectMultiBulkReply();
+
+      Value[] values = new Value[range.size()];
+      
+      for(int i=0; i<values.length ; ++i) {
+        List<Object> touple = (List<Object>)range.get(i);
+        values[i] = new Value((Long)touple.get(0), Double.parseDouble(SafeEncoder.encode((byte[])touple.get(1))));
+      }
+      return values;
+    } catch(JedisDataException ex ) {
+      throw new RedisTimeSeriesException(ex);
+    }
+  }
+  
+  /**
+   * TS.RANGE key fromTimestamp toTimestamp [AGGREGATION aggregationType bucketSizeSeconds]
    * 
    * @param key
    * @param from
@@ -136,7 +295,7 @@ public class RedisTimeSeries {
   public Value[] range(String key, long from, long to, Aggregation aggregation, long bucketSizeSeconds) {
     try (Jedis conn = getConnection()) {
       List<Object> range = sendCommand(conn, Command.RANGE, SafeEncoder.encode(key), Protocol.toByteArray(from), 
-          Protocol.toByteArray(to), aggregation.getRaw(), Protocol.toByteArray(bucketSizeSeconds))
+          Protocol.toByteArray(to), Keyword.AGGREGATION.getRaw(), aggregation.getRaw(), Protocol.toByteArray(bucketSizeSeconds))
       .getObjectMultiBulkReply();
 
       Value[] values = new Value[range.size()];
@@ -162,24 +321,26 @@ public class RedisTimeSeries {
    * @param bucketSizeSeconds
    * @return
    */
-  public Range[] range(long from, long to, Aggregation aggregation, long bucketSizeSeconds, Map<String,String> labels) {
+  public Range[] mrange(long from, long to, Aggregation aggregation, long bucketSizeSeconds, Map<String,String> labels) {
     try (Jedis conn = getConnection()) {
       
-      byte[][] args = new byte[4 + (labels==null ? 0 : labels.size())][];
+      byte[][] args = new byte[6 + (labels==null ? 0 : labels.size())][];
       int i=0;
+     
+      args[i++] = Protocol.toByteArray(from);
+      args[i++] = Protocol.toByteArray(to);
+      args[i++] = Keyword.AGGREGATION.getRaw();
+      args[i++] = aggregation.getRaw();
+      args[i++] = Protocol.toByteArray(bucketSizeSeconds);
       
+      args[i++] = Keyword.FILTER.getRaw();
       if(labels != null) {
         for(Entry<String, String> e : labels.entrySet()) {
           args[i++] = SafeEncoder.encode(e.toString());  
         }
       }
-     
-      args[i++] = Protocol.toByteArray(from);
-      args[i++] = Protocol.toByteArray(to);
-      args[i++] = aggregation.getRaw();
-      args[i++] = Protocol.toByteArray(bucketSizeSeconds);
       
-      List<?> result = sendCommand(conn, Command.RANGEBYLABELS, args).getObjectMultiBulkReply();
+      List<?> result = sendCommand(conn, Command.MRANGE, args).getObjectMultiBulkReply();
       Range[] ranges = new Range[result.size()];
       for(int j=0; j<ranges.length; ++j) {
         List<?> series = (List<?>)result.get(j);
@@ -210,43 +371,35 @@ public class RedisTimeSeries {
   }
   
   /**
-   * TS.INCRBY key [VALUE] [RESET] [TIME_BUCKET]
+   * TS.INCRBY key value [RESET time-bucket] [RETENTION retentionSecs] [LABELS field value..]
    * 
    * @param key
    * @param value
-   * @param reset
    * @param timeBucket
    * @return
    */
-  public boolean incrBy(String key, int value, boolean reset, long timeBucket) {
+  public boolean incrBy(String key, int value, long timeBucket) {
     try (Jedis conn = getConnection()) {
-      return (reset ? 
-          sendCommand(conn, Command.INCRBY, SafeEncoder.encode(key), 
-              Protocol.toByteArray(value), SafeEncoder.encode("RESET"),  Protocol.toByteArray(timeBucket)) 
-          : sendCommand(conn, Command.INCRBY, SafeEncoder.encode(key),  
-              Protocol.toByteArray(value), Protocol.toByteArray(reset),  Protocol.toByteArray(timeBucket)))
+      return sendCommand(conn, Command.INCRBY, SafeEncoder.encode(key), Protocol.toByteArray(value), 
+          Keyword.RESET.getRaw(), Protocol.toByteArray(timeBucket)) 
           .getStatusCodeReply().equals("OK");
     } catch(JedisDataException ex ) {
       throw new RedisTimeSeriesException(ex);
     }
   }
-  
+
   /**
    * TS.DECRBY key [VALUE] [RESET] [TIME_BUCKET]
    * 
    * @param key
    * @param value
-   * @param reset
    * @param timeBucket
    * @return
    */
-  public boolean decrBy(String key, int value, boolean reset, long timeBucket) {
+  public boolean decrBy(String key, int value, long timeBucket) {
     try (Jedis conn = getConnection()) {
-      return (reset ? 
-          sendCommand(conn, Command.DECRBY, SafeEncoder.encode(key), 
-              Protocol.toByteArray(value), SafeEncoder.encode("RESET"),  Protocol.toByteArray(timeBucket)) 
-          : sendCommand(conn, Command.DECRBY, SafeEncoder.encode(key),  
-              Protocol.toByteArray(value), Protocol.toByteArray(reset),  Protocol.toByteArray(timeBucket)))
+      return sendCommand(conn, Command.DECRBY, SafeEncoder.encode(key), Protocol.toByteArray(value), 
+          Keyword.RESET.getRaw(),  Protocol.toByteArray(timeBucket)) 
           .getStatusCodeReply().equals("OK");
     } catch(JedisDataException ex ) {
       throw new RedisTimeSeriesException(ex);
