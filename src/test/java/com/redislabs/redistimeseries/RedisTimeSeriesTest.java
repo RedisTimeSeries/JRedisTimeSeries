@@ -114,20 +114,6 @@ public class RedisTimeSeriesTest {
     Value[] values = client.range("seriesIncDec", 1L, Long.MAX_VALUE, Aggregation.MAX, 100);
     Assert.assertEquals(1, values.length);
     Assert.assertEquals( 1, values[0].getValue(), 0);
-
-    try {
-      client.incrBy("seriesIncDec1", 3, 1);
-      Assert.fail();
-    } catch(RedisTimeSeriesException e) {
-      // Error on creating same rule twice
-    }
-    
-    try {
-      client.decrBy("seriesIncDec1", 3, 1);
-      Assert.fail();
-    } catch(RedisTimeSeriesException e) {
-      // Error on creating same rule twice
-    }
   }
   
   @Test
