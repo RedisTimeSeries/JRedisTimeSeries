@@ -2,6 +2,7 @@
 [![CircleCI](https://circleci.com/gh/RedisTimeSeries/JRedisTimeSeries/tree/master.svg?style=svg)](https://circleci.com/gh/RedisTimeSeries/JRedisTimeSeries/tree/master)
 [![GitHub issues](https://img.shields.io/github/release/RedisTimeSeries/JRedisTimeSeries.svg)](https://github.com/RedisTimeSeries/JRedisTimeSeries/releases/latest)
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.redislabs/jredistimeseries/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.redislabs/jredistimeseries)
+[![Javadocs](https://www.javadoc.io/badge/com.redislabs/jredistimeseries.svg)](https://www.javadoc.io/doc/com.redislabs/jredistimeseries)
 [![Codecov](https://codecov.io/gh/RedisTimeSeries/JRedisTimeSeries/branch/master/graph/badge.svg)](https://codecov.io/gh/RedisTimeSeries/JRedisTimeSeries)
 
 # JRedisTimeSeries
