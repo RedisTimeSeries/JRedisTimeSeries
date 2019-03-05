@@ -163,7 +163,8 @@ public class RedisTimeSeries {
    */
   public boolean add(String sourceKey, long timestamp, double value) {
     try (Jedis conn = getConnection()) {
-      return sendCommand(conn, Command.ADD, SafeEncoder.encode(sourceKey), (timestamp>0 ? Protocol.toByteArray(timestamp) :  SafeEncoder.encode("*")), Protocol.toByteArray(value))
+      return sendCommand(conn, Command.ADD, SafeEncoder.encode(sourceKey), 
+          timestamp>0 ? Protocol.toByteArray(timestamp) :  SafeEncoder.encode("*"), Protocol.toByteArray(value))
           .getStatusCodeReply().equals("OK");
     } catch(JedisDataException ex ) {
       throw new RedisTimeSeriesException(ex);
@@ -181,7 +182,7 @@ public class RedisTimeSeries {
    */
   public boolean add(String sourceKey, long timestamp, double value, long retentionSecs) {
     try (Jedis conn = getConnection()) {
-      return sendCommand(conn, Command.ADD, SafeEncoder.encode(sourceKey), (timestamp>0 ? Protocol.toByteArray(timestamp) :  SafeEncoder.encode("*")),
+      return sendCommand(conn, Command.ADD, SafeEncoder.encode(sourceKey), timestamp>0 ? Protocol.toByteArray(timestamp) :  SafeEncoder.encode("*"),
           Protocol.toByteArray(value), Keyword.RETENTION.getRaw(), Protocol.toByteArray(retentionSecs))
           .getStatusCodeReply().equals("OK");
     } catch(JedisDataException ex ) {
