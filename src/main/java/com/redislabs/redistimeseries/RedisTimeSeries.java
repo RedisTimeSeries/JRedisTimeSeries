@@ -65,14 +65,15 @@ public class RedisTimeSeries {
   public boolean create(String key, Map<String, String> labels){   
     try (Jedis conn = getConnection()) {
 
-      byte[][] args = new byte[1 + (labels==null ? 0 : labels.size()+1)][];
+      byte[][] args = new byte[1 + (labels==null ? 0 : 2*labels.size()+1)][];
       int i=0;
 
       args[i++] = SafeEncoder.encode(key);
       if(labels != null) {
         args[i++] = Keyword.LABELS.getRaw();
         for(Entry<String, String> e : labels.entrySet()) {
-          args[i++] = SafeEncoder.encode(e.toString());  
+          args[i++] = SafeEncoder.encode(e.getKey());  
+          args[i++] = SafeEncoder.encode(e.getValue());
         }
       }
       
@@ -94,7 +95,7 @@ public class RedisTimeSeries {
   public boolean create(String key, long retentionSecs, Map<String, String> labels){   
     try (Jedis conn = getConnection()) {
 
-      byte[][] args = new byte[3 + (labels==null ? 0 : labels.size()+1)][];
+      byte[][] args = new byte[3 + (labels==null ? 0 : 2*labels.size()+1)][];
       int i=0;
       
       args[i++] = SafeEncoder.encode(key);
@@ -104,7 +105,8 @@ public class RedisTimeSeries {
       if(labels != null) {
         args[i++] = Keyword.LABELS.getRaw();
         for(Entry<String, String> e : labels.entrySet()) {
-          args[i++] = SafeEncoder.encode(e.toString());  
+          args[i++] = SafeEncoder.encode(e.getKey());  
+          args[i++] = SafeEncoder.encode(e.getValue());
         }
       }
       
@@ -202,7 +204,7 @@ public class RedisTimeSeries {
   public boolean add(String sourceKey, long timestamp, double value, Map<String, String> labels) {
     try (Jedis conn = getConnection()) {
 
-      byte[][] args = new byte[3 + (labels==null ? 0 : labels.size()+1)][];
+      byte[][] args = new byte[3 + (labels==null ? 0 : 2*labels.size()+1)][];
       int i=0;
       
       args[i++] = SafeEncoder.encode(sourceKey);
@@ -212,7 +214,8 @@ public class RedisTimeSeries {
       if(labels != null) {
         args[i++] = Keyword.LABELS.getRaw();
         for(Entry<String, String> e : labels.entrySet()) {
-          args[i++] = SafeEncoder.encode(e.toString());  
+          args[i++] = SafeEncoder.encode(e.getKey());  
+          args[i++] = SafeEncoder.encode(e.getValue());
         }
       }
       
@@ -235,7 +238,7 @@ public class RedisTimeSeries {
   public boolean add(String sourceKey, long timestamp, double value, long retentionSecs, Map<String, String> labels) {
     try (Jedis conn = getConnection()) {
 
-      byte[][] args = new byte[5 + (labels==null ? 0 : labels.size()+1)][];
+      byte[][] args = new byte[5 + (labels==null ? 0 : 2*labels.size()+1)][];
       int i=0;
       
       args[i++] = SafeEncoder.encode(sourceKey);
@@ -247,7 +250,8 @@ public class RedisTimeSeries {
       if(labels != null) {
         args[i++] = Keyword.LABELS.getRaw();
         for(Entry<String, String> e : labels.entrySet()) {
-          args[i++] = SafeEncoder.encode(e.toString());  
+          args[i++] = SafeEncoder.encode(e.getKey());  
+          args[i++] = SafeEncoder.encode(e.getValue());
         }
       }
       

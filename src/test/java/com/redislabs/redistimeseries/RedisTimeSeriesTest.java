@@ -117,11 +117,17 @@ public class RedisTimeSeriesTest {
     Value[] values = client.range("seriesAdd", 1200L, 4600L, Aggregation.COUNT, 1);
     Assert.assertEquals(3, values.length);
     
-    labels.remove("l2");
-    Range[] ranges = client.mrange(500L, 4600L, Aggregation.COUNT, 1, labels);
+
+    Map<String, String> queryLabels = new HashMap<>();
+    queryLabels.put("l1", "v1");
+    Range[] ranges = client.mrange(500L, 4600L, Aggregation.COUNT, 1, queryLabels);
     Assert.assertEquals(1, ranges.length);
+
+    Range range = ranges[0];
+    Assert.assertEquals("seriesAdd", range.getKey());
+    Assert.assertEquals(labels, range.getLables());
     
-    Value[] rangeValues = ranges[0].getValues();
+    Value[] rangeValues = range.getValues();
     Assert.assertEquals(4, rangeValues.length);
     Assert.assertEquals( new Value(1000, 1), rangeValues[0]);
     Assert.assertEquals( 2000L, rangeValues[1].getTime());
