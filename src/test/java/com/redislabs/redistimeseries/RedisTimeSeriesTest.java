@@ -27,13 +27,11 @@ public class RedisTimeSeriesTest {
   
   @Test
   public void testCreate() {
-//    Map<String, String> labels = new HashMap<>();
-//    labels.put("l1", "v1");
-//    labels.put("l2", "v2");
+    Map<String, String> labels = new HashMap<>();
+    labels.put("l1", "v1");
+    labels.put("l2", "v2");
     
-    //     Assert.assertTrue(client.create("series1", 10/*retentionSecs*/, labels));
-
-    Assert.assertTrue(client.create("series1", 10/*retentionSecs*/, null));
+    Assert.assertTrue(client.create("series1", 10/*retentionSecs*/, labels));
     try (Jedis conn = pool.getResource()) {
       Assert.assertEquals("TSDB-TYPE", conn.type("series1"));
     }          
@@ -43,12 +41,18 @@ public class RedisTimeSeriesTest {
       Assert.fail();
     } catch(RedisTimeSeriesException e) {
     }
+    
+    try {
+      Assert.assertTrue(client.create("series1", 10));
+      Assert.fail();
+    } catch(RedisTimeSeriesException e) {
+    }
   }
 
   @Test
   public void testRule() {
-    Assert.assertTrue(client.create("source", 10/*retentionSecs*/, null));
-    Assert.assertTrue(client.create("dest", 10/*retentionSecs*/, null));
+    Assert.assertTrue(client.create("source"));
+    Assert.assertTrue(client.create("dest", 10/*retentionSecs*/));
     
     Assert.assertTrue(client.createRule("source", Aggregation.AVG, 100, "dest"));
     
@@ -108,8 +112,8 @@ public class RedisTimeSeriesTest {
   public void testIncDec() {
     Assert.assertTrue(client.create("seriesIncDec", 100/*retentionSecs*/));   
     Assert.assertTrue(client.add("seriesIncDec", -1, 1, 10000, null));
-    Assert.assertTrue(client.incrBy("seriesIncDec", 3, 10));
-    Assert.assertTrue(client.decrBy("seriesIncDec", 2, 10));
+    Assert.assertTrue(client.incrBy("seriesIncDec", 3, 100));
+    Assert.assertTrue(client.decrBy("seriesIncDec", 2, 100));
     
     Value[] values = client.range("seriesIncDec", 1L, Long.MAX_VALUE, Aggregation.MAX, 100);
     Assert.assertEquals(1, values.length);
