@@ -36,8 +36,29 @@ public class RedisTimeSeriesTest {
       Assert.assertEquals("TSDB-TYPE", conn.type("series1"));
     }          
     
+    Assert.assertTrue(client.create("series2", labels));
+    try (Jedis conn = pool.getResource()) {
+      Assert.assertEquals("TSDB-TYPE", conn.type("series2"));
+    }
+    
+    Assert.assertTrue(client.create("series3", 10/*retentionSecs*/));
+    try (Jedis conn = pool.getResource()) {
+      Assert.assertEquals("TSDB-TYPE", conn.type("series3"));
+    }
+    
+    Assert.assertTrue(client.create("series4"));
+    try (Jedis conn = pool.getResource()) {
+      Assert.assertEquals("TSDB-TYPE", conn.type("series4"));
+    }
+    
     try {
-      Assert.assertTrue(client.create("series1", 10/*retentionSecs*/, null));
+      Assert.assertTrue(client.create("series1", 10/*retentionSecs*/, labels));
+      Assert.fail();
+    } catch(RedisTimeSeriesException e) {
+    }
+    
+    try {
+      Assert.assertTrue(client.create("series1", labels));
       Assert.fail();
     } catch(RedisTimeSeriesException e) {
     }
@@ -47,6 +68,13 @@ public class RedisTimeSeriesTest {
       Assert.fail();
     } catch(RedisTimeSeriesException e) {
     }
+    
+    try {
+      Assert.assertTrue(client.create("series1"));
+      Assert.fail();
+    } catch(RedisTimeSeriesException e) {
+    }
+
   }
 
   @Test
