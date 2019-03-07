@@ -110,26 +110,22 @@ public class RedisTimeSeriesTest {
     Assert.assertTrue(client.create("seriesAdd", 10/*retentionSecs*/, labels));
     
     Assert.assertTrue(client.add("seriesAdd", 1000L, 1.1, 10000, null));
+    Assert.assertTrue(client.add("seriesAdd", 2000L, 3.2, null));
     Assert.assertTrue(client.add("seriesAdd", 3200L, 3.2, 10000));
     Assert.assertTrue(client.add("seriesAdd", 4500L, -1.2));
 
     Value[] values = client.range("seriesAdd", 1200L, 4600L, Aggregation.COUNT, 1);
-    Assert.assertEquals(2, values.length);
+    Assert.assertEquals(3, values.length);
     
     labels.remove("l2");
     Range[] ranges = client.mrange(500L, 4600L, Aggregation.COUNT, 1, labels);
     Assert.assertEquals(1, ranges.length);
-    Assert.assertEquals(3, ranges[0].getValues().length);
     
-//    Range[] ranges = client.mrange(500L, 4600L, Aggregation.COUNT, 1, labels);
-//    Assert.assertEquals(0, ranges.length);
+    Value[] rangeValues = ranges[0].getValues();
+    Assert.assertEquals(4, rangeValues.length);
+    Assert.assertEquals( new Value(1000, 1), rangeValues[0]);
+    Assert.assertEquals( 2000L, rangeValues[1].getTime());
     
-//  TODO return when https://github.com/RedisLabsModules/RedisTimeSeries/issues/39 fixed  
-//    Assert.assertEquals(1, ranges.length);
-    
-//    Assert.assertEquals( new Value(1000, 1), values[0]);
-//    Assert.assertEquals( new Value(3000, 1), values[1]);
-//    
     try {
       client.add("seriesAdd", 800L, 1.1, 10000, null);
       Assert.fail();
