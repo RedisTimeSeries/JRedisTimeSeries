@@ -114,9 +114,11 @@ public class RedisTimeSeriesTest {
     Assert.assertTrue(client.add("seriesAdd", 3200L, 3.2, 10000));
     Assert.assertTrue(client.add("seriesAdd", 4500L, -1.2));
 
-    Value[] values = client.range("seriesAdd", 1200L, 4600L, Aggregation.COUNT, 1);
+    Value[] values = client.range("seriesAdd", 800L, 3000L);
+    Assert.assertEquals(2, values.length);
+    
+    values = client.range("seriesAdd", 1200L, 4600L, Aggregation.COUNT, 1);
     Assert.assertEquals(3, values.length);
-
 
     Range[] ranges = client.mrange(500L, 4600L, Aggregation.COUNT, 1, "l1=v1");
     Assert.assertEquals(1, ranges.length);
@@ -129,7 +131,23 @@ public class RedisTimeSeriesTest {
     Assert.assertEquals(4, rangeValues.length);
     Assert.assertEquals( new Value(1000, 1), rangeValues[0]);
     Assert.assertEquals( 2000L, rangeValues[1].getTime());
+  
+    // Add with labels
+    Map<String, String> labels2 = new HashMap<>();
+    labels2.put("l3", "v3");
+    labels2.put("l4", "v4");    
+    Assert.assertTrue(client.add("seriesAdd2", 1000L, 1.1, 10000, labels2));
+    Range[] ranges2 = client.mrange(500L, 4600L, Aggregation.COUNT, 1, "l4=v4");
+    Assert.assertEquals(1, ranges2.length);
+    
+    Map<String, String> labels3 = new HashMap<>();
+    labels3.put("l3", "v33");
+    labels3.put("l4", "v4");    
+    Assert.assertTrue(client.add("seriesAdd3", 1000L, 1.1, labels3));
+    Range[] ranges3 = client.mrange(500L, 4600L, Aggregation.COUNT, 1, "l4=v4");
+    Assert.assertEquals(2, ranges3.length);
 
+    // Failure cases
     try {
       client.add("seriesAdd", 800L, 1.1);
       Assert.fail();
