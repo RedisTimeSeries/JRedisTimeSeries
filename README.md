@@ -15,7 +15,7 @@ Java Client for RedisTimeSeries
     <dependency>
       <groupId>com.redislabs</groupId>
       <artifactId>jredistimeseries</artifactId>
-      <version>0.1.0</version>
+      <version>0.4.0</version>
     </dependency>
   </dependencies>
 ```
@@ -38,7 +38,7 @@ and
     <dependency>
       <groupId>com.redislabs</groupId>
       <artifactId>jredistimeseries</artifactId>
-      <version>0.2.0-SNAPSHOT</version>
+      <version>0.5.0-SNAPSHOT</version>
     </dependency>
   </dependencies>
 ```
@@ -47,13 +47,18 @@ and
 # Example: Using the Java Client
 
 ```java
-   Pool<Jedis> pool = ...
-   RedisTimeSeries rts = new RedisTimeSeries(pool);
+   RedisTimeSeries rts = new RedisTimeSeries("localhost", 6379);
    
-   rts.create("cpu1", 60*10 /*10min*/, 100, null);
+   Map<String, String> labels = new HashMap<>();
+   labels.put("country", "US");
+   labels.put("cores", "8"); 
+   rts.create("cpu1", 60*10 /*10min*/, 100, labels);
    
    rts.create("cpu1-avg", 60*10 /*10min*/, 100, null);
    rts.createRule("cpu1", Aggregation.AVG, 60 /*1min*/, "cpu1-avg");
    
-   rts.add("cpu1", -1 /*server time*/, 80, null);
+   rts.add("cpu1", System.currentTimeMillis()/1000 /* time sec */, 80);
+   
+   // Get all the timeseries in US in the last 10min average per min  
+   rts.mrange(System.currentTimeMillis()/1000 - 10*60, System.currentTimeMillis()/1000, Aggregation.AVG, 60, "country=US")
 ```
