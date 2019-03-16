@@ -130,6 +130,7 @@ public class RedisTimeSeriesTest {
     Value[] rangeValues = range.getValues();
     Assert.assertEquals(4, rangeValues.length);
     Assert.assertEquals( new Value(1000, 1), rangeValues[0]);
+    Assert.assertNotEquals( new Value(1000, 1.1), rangeValues[0]);
     Assert.assertEquals( 2000L, rangeValues[1].getTime());
     Assert.assertEquals( "(2000:1.0)", rangeValues[1].toString());
     Assert.assertEquals( 1072695248, rangeValues[1].hashCode());
