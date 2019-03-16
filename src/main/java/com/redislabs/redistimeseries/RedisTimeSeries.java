@@ -324,12 +324,13 @@ public class RedisTimeSeries {
    * @param to
    * @param aggregation
    * @param bucketSizeSeconds
+   * @param filters
    * @return
    */
-  public Range[] mrange(long from, long to, Aggregation aggregation, long bucketSizeSeconds, Map<String,String> labels) {
+  public Range[] mrange(long from, long to, Aggregation aggregation, long bucketSizeSeconds, String... filters) {
     try (Jedis conn = getConnection()) {
       
-      byte[][] args = new byte[6 + (labels==null ? 0 : labels.size())][];
+      byte[][] args = new byte[6 + (filters==null ? 0 : filters.length)][];
       int i=0;
      
       args[i++] = Protocol.toByteArray(from);
@@ -339,9 +340,9 @@ public class RedisTimeSeries {
       args[i++] = Protocol.toByteArray(bucketSizeSeconds);
       
       args[i++] = Keyword.FILTER.getRaw();
-      if(labels != null) {
-        for(Entry<String, String> e : labels.entrySet()) {
-          args[i++] = SafeEncoder.encode(e.toString());  
+      if(filters != null) {
+        for(String label : filters) {
+          args[i++] = SafeEncoder.encode(label);  
         }
       }
       

@@ -118,9 +118,7 @@ public class RedisTimeSeriesTest {
     Assert.assertEquals(3, values.length);
     
 
-    Map<String, String> queryLabels = new HashMap<>();
-    queryLabels.put("l1", "v1");
-    Range[] ranges = client.mrange(500L, 4600L, Aggregation.COUNT, 1, queryLabels);
+    Range[] ranges = client.mrange(500L, 4600L, Aggregation.COUNT, 1, "l1=v1");
     Assert.assertEquals(1, ranges.length);
 
     Range range = ranges[0];
