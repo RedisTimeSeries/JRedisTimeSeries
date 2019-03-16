@@ -133,6 +133,7 @@ public class RedisTimeSeriesTest {
     Assert.assertEquals( 2000L, rangeValues[1].getTime());
     Assert.assertEquals( "(2000:1.0)", rangeValues[1].toString());
     Assert.assertEquals( 1072695248, rangeValues[1].hashCode());
+    Assert.assertFalse(rangeValues[1].equals("(2000:1.0)"));
   
     // Add with labels
     Map<String, String> labels2 = new HashMap<>();
