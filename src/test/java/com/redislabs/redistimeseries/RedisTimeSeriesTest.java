@@ -131,6 +131,20 @@ public class RedisTimeSeriesTest {
     Assert.assertEquals( 2000L, rangeValues[1].getTime());
 
     try {
+      client.add("seriesAdd", 800L, 1.1);
+      Assert.fail();
+    } catch(RedisTimeSeriesException e) {
+      // Error on creating same rule twice
+    }
+    
+    try {
+      client.add("seriesAdd", 800L, 1.1, 10000);
+      Assert.fail();
+    } catch(RedisTimeSeriesException e) {
+      // Error on creating same rule twice
+    }
+    
+    try {
       client.add("seriesAdd", 800L, 1.1, 10000, null);
       Assert.fail();
     } catch(RedisTimeSeriesException e) {
