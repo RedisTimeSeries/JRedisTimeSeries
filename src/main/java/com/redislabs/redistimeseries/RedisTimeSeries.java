@@ -418,7 +418,7 @@ public class RedisTimeSeries {
   }
 
   /**
-   * TS.INCRBY key value [RESET time-bucket] [RETENTION retentionSecs] [LABELS field value..]
+   * TS.INCRBY key value [RESET time-bucket]
    * 
    * @param key
    * @param value

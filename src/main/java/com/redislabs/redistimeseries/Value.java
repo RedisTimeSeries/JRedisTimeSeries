@@ -30,4 +30,9 @@ public class Value {
   public int hashCode() {
     return Long.hashCode(time ) ^ Double.hashCode(val);
   }
+  
+  @Override
+  public String toString() {
+    return "(" + this.time + ":" + this.val + ")";
+  }
 }
