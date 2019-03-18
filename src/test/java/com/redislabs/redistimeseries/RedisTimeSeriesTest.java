@@ -190,7 +190,7 @@ public class RedisTimeSeriesTest {
 
     Value[] values = client.range("seriesIncDec", 1L, Long.MAX_VALUE, Aggregation.MAX, 100);
     Assert.assertEquals(1, values.length);
-    Assert.assertEquals( 1, values[0].getValue(), 0);
+    Assert.assertEquals(2, values[0].getValue(), 0);
   }
 
   @Test
