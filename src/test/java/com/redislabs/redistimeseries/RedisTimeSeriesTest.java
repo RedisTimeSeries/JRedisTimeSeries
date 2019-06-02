@@ -107,7 +107,7 @@ public class RedisTimeSeriesTest {
     Map<String, String> labels = new HashMap<>();
     labels.put("l1", "v1");
     labels.put("l2", "v2");    
-    Assert.assertTrue(client.create("seriesAdd", 10/*retentionSecs*/, labels));
+    Assert.assertTrue(client.create("seriesAdd", 10000L/*retentionSecs*/, labels));
 
     Assert.assertTrue(client.add("seriesAdd", 1000L, 1.1, 10000, null));
     Assert.assertTrue(client.add("seriesAdd", 2000L, 3.2, null));
