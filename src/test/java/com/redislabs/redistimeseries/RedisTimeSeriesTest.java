@@ -109,10 +109,10 @@ public class RedisTimeSeriesTest {
     labels.put("l2", "v2");    
     Assert.assertTrue(client.create("seriesAdd", 10000L/*retentionSecs*/, labels));
 
-    Assert.assertTrue(client.add("seriesAdd", 1000L, 1.1, 10000, null));
-    Assert.assertTrue(client.add("seriesAdd", 2000L, 3.2, null));
-    Assert.assertTrue(client.add("seriesAdd", 3200L, 3.2, 10000));
-    Assert.assertTrue(client.add("seriesAdd", 4500L, -1.2));
+    Assert.assertEquals(1000L, client.add("seriesAdd", 1000L, 1.1, 10000, null));
+    Assert.assertEquals(2000L, client.add("seriesAdd", 2000L, 3.2, null));
+    Assert.assertEquals(3200L, client.add("seriesAdd", 3200L, 3.2, 10000));
+    Assert.assertEquals(4500L, client.add("seriesAdd", 4500L, -1.2));
 
     Value[] values = client.range("seriesAdd", 800L, 3000L);
     Assert.assertEquals(2, values.length);
@@ -140,14 +140,14 @@ public class RedisTimeSeriesTest {
     Map<String, String> labels2 = new HashMap<>();
     labels2.put("l3", "v3");
     labels2.put("l4", "v4");    
-    Assert.assertTrue(client.add("seriesAdd2", 1000L, 1.1, 10000, labels2));
+    Assert.assertEquals(client.add("seriesAdd2", 1000L, 1.1, 10000, labels2), 1000L);
     Range[] ranges2 = client.mrange(500L, 4600L, Aggregation.COUNT, 1, "l4=v4");
     Assert.assertEquals(1, ranges2.length);
     
     Map<String, String> labels3 = new HashMap<>();
     labels3.put("l3", "v33");
     labels3.put("l4", "v4");    
-    Assert.assertTrue(client.add("seriesAdd3", 1000L, 1.1, labels3));
+    Assert.assertEquals(1000L, client.add("seriesAdd3", 1000L, 1.1, labels3));
     Range[] ranges3 = client.mrange(500L, 4600L, Aggregation.COUNT, 1, "l4=v4");
     Assert.assertEquals(2, ranges3.length);
 
@@ -184,7 +184,7 @@ public class RedisTimeSeriesTest {
   @Test
   public void testIncDec() {
     Assert.assertTrue(client.create("seriesIncDec", 100/*retentionSecs*/));   
-    Assert.assertTrue(client.add("seriesIncDec", -1, 1, 10000, null));
+    Assert.assertEquals((System.currentTimeMillis()/1000L), client.add("seriesIncDec", -1, 1, 10000, null));
     Assert.assertTrue(client.incrBy("seriesIncDec", 3, 100));
     Assert.assertTrue(client.decrBy("seriesIncDec", 2, 100));
 

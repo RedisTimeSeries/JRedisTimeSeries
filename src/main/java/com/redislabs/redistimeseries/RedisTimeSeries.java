@@ -204,11 +204,11 @@ public class RedisTimeSeries {
    * @param value
    * @return
    */
-  public boolean add(String sourceKey, long timestamp, double value) {
+  public long add(String sourceKey, long timestamp, double value) {
     try (Jedis conn = getConnection()) {
       return sendCommand(conn, Command.ADD, SafeEncoder.encode(sourceKey), 
           timestamp>0 ? Protocol.toByteArray(timestamp) :  SafeEncoder.encode("*"), Protocol.toByteArray(value))
-          .getStatusCodeReply().equals("OK");
+          .getIntegerReply();
     } catch(JedisDataException ex ) {
       throw new RedisTimeSeriesException(ex);
     }
@@ -223,11 +223,10 @@ public class RedisTimeSeries {
    * @param retentionSecs
    * @return
    */
-  public boolean add(String sourceKey, long timestamp, double value, long retentionSecs) {
+  public long add(String sourceKey, long timestamp, double value, long retentionSecs) {
     try (Jedis conn = getConnection()) {
       return sendCommand(conn, Command.ADD, SafeEncoder.encode(sourceKey), timestamp>0 ? Protocol.toByteArray(timestamp) :  SafeEncoder.encode("*"),
-          Protocol.toByteArray(value), Keyword.RETENTION.getRaw(), Protocol.toByteArray(retentionSecs))
-          .getStatusCodeReply().equals("OK");
+          Protocol.toByteArray(value), Keyword.RETENTION.getRaw(), Protocol.toByteArray(retentionSecs)).getIntegerReply();
     } catch(JedisDataException ex ) {
       throw new RedisTimeSeriesException(ex);
     }
@@ -242,7 +241,7 @@ public class RedisTimeSeries {
    * @param labels
    * @return
    */
-  public boolean add(String sourceKey, long timestamp, double value, Map<String, String> labels) {
+  public long add(String sourceKey, long timestamp, double value, Map<String, String> labels) {
     try (Jedis conn = getConnection()) {
 
       byte[][] args = new byte[3 + (labels==null ? 0 : 2*labels.size()+1)][];
@@ -260,7 +259,7 @@ public class RedisTimeSeries {
         }
       }
 
-      return sendCommand(conn, Command.ADD, args).getStatusCodeReply().equals("OK");
+      return sendCommand(conn, Command.ADD, args).getIntegerReply();
     } catch(JedisDataException ex ) {
       throw new RedisTimeSeriesException(ex);
     }
@@ -276,7 +275,7 @@ public class RedisTimeSeries {
    * @param labels
    * @return
    */
-  public boolean add(String sourceKey, long timestamp, double value, long retentionSecs, Map<String, String> labels) {
+  public long add(String sourceKey, long timestamp, double value, long retentionSecs, Map<String, String> labels) {
     try (Jedis conn = getConnection()) {
 
       byte[][] args = new byte[5 + (labels==null ? 0 : 2*labels.size()+1)][];
@@ -296,7 +295,7 @@ public class RedisTimeSeries {
         }
       }
 
-      return sendCommand(conn, Command.ADD, args).getStatusCodeReply().equals("OK");
+      return sendCommand(conn, Command.ADD, args).getIntegerReply();
     } catch(JedisDataException ex ) {
       throw new RedisTimeSeriesException(ex);
     }
