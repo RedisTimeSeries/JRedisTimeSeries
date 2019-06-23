@@ -1,6 +1,7 @@
 package com.redislabs.redistimeseries;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.junit.Assert;
@@ -12,6 +13,7 @@ import com.redislabs.redistimeseries.information.Rule;
 
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
+import redis.clients.jedis.exceptions.JedisDataException;
 
 public class RedisTimeSeriesTest {
 
@@ -31,7 +33,7 @@ public class RedisTimeSeriesTest {
     labels.put("l1", "v1");
     labels.put("l2", "v2");
 
-    Assert.assertTrue(client.create("series1", 10/*retentionSecs*/, labels));
+    Assert.assertTrue(client.create("series1", 10/*retentionTime*/, labels));
     try (Jedis conn = pool.getResource()) {
       Assert.assertEquals("TSDB-TYPE", conn.type("series1"));
     }          
@@ -41,7 +43,7 @@ public class RedisTimeSeriesTest {
       Assert.assertEquals("TSDB-TYPE", conn.type("series2"));
     }
 
-    Assert.assertTrue(client.create("series3", 10/*retentionSecs*/));
+    Assert.assertTrue(client.create("series3", 10/*retentionTime*/));
     try (Jedis conn = pool.getResource()) {
       Assert.assertEquals("TSDB-TYPE", conn.type("series3"));
     }
@@ -52,27 +54,27 @@ public class RedisTimeSeriesTest {
     }
 
     try {
-      Assert.assertTrue(client.create("series1", 10/*retentionSecs*/, labels));
+      Assert.assertTrue(client.create("series1", 10/*retentionTime*/, labels));
       Assert.fail();
-    } catch(RedisTimeSeriesException e) {
+    } catch(JedisDataException e) {
     }
 
     try {
       Assert.assertTrue(client.create("series1", labels));
       Assert.fail();
-    } catch(RedisTimeSeriesException e) {
+    } catch(JedisDataException e) {
     }
 
     try {
       Assert.assertTrue(client.create("series1", 10));
       Assert.fail();
-    } catch(RedisTimeSeriesException e) {
+    } catch(JedisDataException e) {
     }
 
     try {
       Assert.assertTrue(client.create("series1"));
       Assert.fail();
-    } catch(RedisTimeSeriesException e) {
+    } catch(JedisDataException e) {
     }
 
   }
@@ -80,14 +82,14 @@ public class RedisTimeSeriesTest {
   @Test
   public void testRule() {
     Assert.assertTrue(client.create("source"));
-    Assert.assertTrue(client.create("dest", 10/*retentionSecs*/));
+    Assert.assertTrue(client.create("dest", 10/*retentionTime*/));
 
     Assert.assertTrue(client.createRule("source", Aggregation.AVG, 100, "dest"));
 
     try {
       Assert.assertFalse(client.createRule("source", Aggregation.COUNT, 100, "dest"));
       Assert.fail();
-    } catch(RedisTimeSeriesException e) {
+    } catch(JedisDataException e) {
       // Error on creating same rule twice
     }
 
@@ -97,7 +99,7 @@ public class RedisTimeSeriesTest {
     try {
       Assert.assertTrue(client.deleteRule("source", "dest1"));
       Assert.fail();
-    } catch(RedisTimeSeriesException e) {
+    } catch(JedisDataException e) {
       // Error on creating same rule twice
     }
   }
@@ -107,7 +109,7 @@ public class RedisTimeSeriesTest {
     Map<String, String> labels = new HashMap<>();
     labels.put("l1", "v1");
     labels.put("l2", "v2");    
-    Assert.assertTrue(client.create("seriesAdd", 10000L/*retentionSecs*/, labels));
+    Assert.assertTrue(client.create("seriesAdd", 10000L/*retentionTime*/, labels));
 
     Assert.assertEquals(1000L, client.add("seriesAdd", 1000L, 1.1, 10000, null));
     Assert.assertEquals(2000L, client.add("seriesAdd", 2000L, 3.2, null));
@@ -155,50 +157,69 @@ public class RedisTimeSeriesTest {
     try {
       client.add("seriesAdd", 800L, 1.1);
       Assert.fail();
-    } catch(RedisTimeSeriesException e) {
+    } catch(JedisDataException e) {
       // Error on creating same rule twice
     }
     
     try {
       client.add("seriesAdd", 800L, 1.1, 10000);
       Assert.fail();
-    } catch(RedisTimeSeriesException e) {
+    } catch(JedisDataException e) {
       // Error on creating same rule twice
     }
     
     try {
       client.add("seriesAdd", 800L, 1.1, 10000, null);
       Assert.fail();
-    } catch(RedisTimeSeriesException e) {
+    } catch(JedisDataException e) {
       // Error on creating same rule twice
     }
 
     try {
       client.range("seriesAdd1", 500L, 4000L, Aggregation.COUNT, 1);
       Assert.fail();
-    } catch(RedisTimeSeriesException e) {
+    } catch(JedisDataException e) {
       // Error on creating same rule twice
     }
+  }
+  
+  @Test
+  public void testMadd() {
+    Map<String, String> labels = new HashMap<>();
+    labels.put("l1", "v1");
+    labels.put("l2", "v2");    
+    Assert.assertTrue(client.create("seriesAdd", 10000L/*retentionTime*/, labels));
+
+    List<Object> result = client.madd( 
+        new Measurement("seriesAdd", 1000L, 1.1), 
+        new Measurement("seriesAdd", 2000L, 3.2),
+        new Measurement("seriesAdd", 1500L, 3.2),
+        new Measurement("seriesAdd", 3200L, 3.2));
+    
+    Assert.assertEquals(1000L, result.get(0));
+    Assert.assertEquals(2000L, result.get(1));
+    Assert.assertTrue( result.get(2) instanceof JedisDataException);
+    Assert.assertEquals(3200L, result.get(3));
   }
 
   @Test
   public void testIncDec() {
-    Assert.assertTrue(client.create("seriesIncDec", 100/*retentionSecs*/));   
-    Assert.assertEquals((System.currentTimeMillis()/1000L), client.add("seriesIncDec", -1, 1, 10000, null));
-    Assert.assertTrue(client.incrBy("seriesIncDec", 3, 100));
-    Assert.assertTrue(client.decrBy("seriesIncDec", 2, 100));
+    Assert.assertTrue(client.create("seriesIncDec", 100*1000/*100sec retentionTime*/));   
+    Assert.assertTrue( client.add("seriesIncDec", -1, 1, 10000, null)-System.currentTimeMillis() < 100 );
+    Assert.assertTrue(client.incrBy("seriesIncDec", 3, 1000));
+    Assert.assertTrue(client.decrBy("seriesIncDec", 2, 1000));
 
-    Value[] values = client.range("seriesIncDec", 1L, Long.MAX_VALUE, Aggregation.MAX, 100);
+    Value[] values = client.range("seriesIncDec", 1L, Long.MAX_VALUE);
     Assert.assertEquals(1, values.length);
     Assert.assertEquals(2, values[0].getValue(), 0);
   }
 
   @Test
   public void testInfo() {
-    Assert.assertTrue(client.create("seriesInfo", 10/*retentionSecs*/, null));   
+    Assert.assertTrue(client.create("seriesInfo", 10/*retentionTime*/, null));   
 
     Info info = client.info("seriesInfo");
-    Assert.assertEquals( (Long)10L, info.getProperty("retentionSecs"));
+    Assert.assertEquals( (Long)10L, info.getProperty("retentionTime"));
     Assert.assertEquals( null, info.getLabel(""));
     Rule rule = info.getRule("");
     //    Assert.assertEquals( "", rule);
@@ -210,7 +231,7 @@ public class RedisTimeSeriesTest {
     try {
       client.info("seriesInfo1");
       Assert.fail();
-    } catch(RedisTimeSeriesException e) {
+    } catch(JedisDataException e) {
       // Error on creating same rule twice
     }
   }

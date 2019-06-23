@@ -11,6 +11,7 @@ public enum Command implements ProtocolCommand{
     CREATE_RULE("TS.CREATERULE"),
     DELETE_RULE("TS.DELETERULE"),
     ADD("TS.ADD"),
+    MADD("TS.MADD"),
     INCRBY("TS.INCRBY"),
     DECRBY("TS.DECRBY"),
     INFO("TS.INFO");
