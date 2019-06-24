@@ -97,7 +97,7 @@ public class RedisTimeSeries {
    * TS.CREATE key [LABELS field value..]
    * 
    * @param key
-   * @param maxSamplesPerChunk
+   * @param labels
    * @return
    */
   public boolean create(String key, Map<String, String> labels){   
@@ -125,7 +125,7 @@ public class RedisTimeSeries {
    * 
    * @param key
    * @param retentionTime
-   * @param maxSamplesPerChunk
+   * @param labels
    * @return
    */
   public boolean create(String key, long retentionTime, Map<String, String> labels){   

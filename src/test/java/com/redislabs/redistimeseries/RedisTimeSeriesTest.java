@@ -184,6 +184,34 @@ public class RedisTimeSeriesTest {
   }
   
   @Test
+  public void testAddStar() throws InterruptedException {
+    Map<String, String> labels = new HashMap<>();
+    labels.put("l11", "v11");
+    labels.put("l22", "v22");    
+    Assert.assertTrue(client.create("seriesAdd2", 10000L/*retentionTime*/, labels));
+
+    long startTime = System.currentTimeMillis();
+    Thread.sleep(1);
+    long add1 = client.add("seriesAdd2", 0, 1.1, 10000, null);
+    Assert.assertTrue(add1>startTime);
+    Thread.sleep(1);
+    long add2 = client.add("seriesAdd2", 0, 3.2, null);
+    Assert.assertTrue(add2>add1);
+    Thread.sleep(1);
+    long add3 = client.add("seriesAdd2", 0, 3.2, 10000);
+    Assert.assertTrue(add3>add2);
+    Thread.sleep(1);
+    long add4 = client.add("seriesAdd2", 0, -1.2);
+    Assert.assertTrue(add4>add3);
+    Thread.sleep(1);
+    long endTime = System.currentTimeMillis();
+    Assert.assertTrue(System.currentTimeMillis()>add4);
+
+    Value[] values = client.range("seriesAdd2", startTime, add3);
+    Assert.assertEquals(3, values.length);
+  }
+  
+  @Test
   public void testMadd() {
     Map<String, String> labels = new HashMap<>();
     labels.put("l1", "v1");
