@@ -122,6 +122,16 @@ public class RedisTimeSeriesTest {
     values = client.range("seriesAdd", 1200L, 4600L, Aggregation.COUNT, 1);
     Assert.assertEquals(3, values.length);
 
+    try {
+      client.mrange(500L, 4600L, Aggregation.COUNT, 1);
+      Assert.fail();
+    }catch(JedisDataException e) {}
+
+    try {
+      client.mrange(500L, 4600L, Aggregation.COUNT, 1, (String[])null);
+      Assert.fail();
+    }catch(JedisDataException e) {}
+    
     Range[] ranges = client.mrange(500L, 4600L, Aggregation.COUNT, 1, "l1=v1");
     Assert.assertEquals(1, ranges.length);
 
@@ -136,13 +146,13 @@ public class RedisTimeSeriesTest {
     Assert.assertEquals( 2000L, rangeValues[1].getTime());
     Assert.assertEquals( "(2000:1.0)", rangeValues[1].toString());
     Assert.assertEquals( 1072695248, rangeValues[1].hashCode());
-    Assert.assertFalse(rangeValues[1].equals("(2000:1.0)"));
+    Assert.assertNotEquals("(2000:1.0)", rangeValues[1]); // verify wrong type
   
     // Add with labels
     Map<String, String> labels2 = new HashMap<>();
     labels2.put("l3", "v3");
     labels2.put("l4", "v4");    
-    Assert.assertEquals(client.add("seriesAdd2", 1000L, 1.1, 10000, labels2), 1000L);
+    Assert.assertEquals(1000L, client.add("seriesAdd2", 1000L, 1.1, 10000, labels2));
     Range[] ranges2 = client.mrange(500L, 4600L, Aggregation.COUNT, 1, "l4=v4");
     Assert.assertEquals(1, ranges2.length);
     
@@ -205,7 +215,7 @@ public class RedisTimeSeriesTest {
     Assert.assertTrue(add4>add3);
     Thread.sleep(1);
     long endTime = System.currentTimeMillis();
-    Assert.assertTrue(System.currentTimeMillis()>add4);
+    Assert.assertTrue(endTime>add4);
 
     Value[] values = client.range("seriesAdd2", startTime, add3);
     Assert.assertEquals(3, values.length);
@@ -255,18 +265,23 @@ public class RedisTimeSeriesTest {
 
   @Test
   public void testInfo() {
-    Assert.assertTrue(client.create("seriesInfo", 10/*retentionTime*/, null));   
-
-    Info info = client.info("seriesInfo");
-    Assert.assertEquals( (Long)10L, info.getProperty("retentionTime"));
-    Assert.assertEquals( null, info.getLabel(""));
-    Rule rule = info.getRule("");
-    //    Assert.assertEquals( "", rule);
-    //    Assert.assertEquals( "", rule.getTarget());
-    //    Assert.assertEquals( "", rule.getValue());
-    //    Assert.assertEquals( Aggregation.AVG, rule.getAggregation());
-
-
+    Map<String, String> labels = new HashMap<>();
+    labels.put("l1", "v1");
+    labels.put("l2", "v2");    
+    Assert.assertTrue(client.create("source", 10000L/*retentionTime*/, labels));
+    Assert.assertTrue(client.create("dest", 20000L/*retentionTime*/));
+    Assert.assertTrue(client.createRule("source", Aggregation.AVG, 100, "dest"));
+    
+    Info info = client.info("source");
+    Assert.assertEquals( (Long)10000L, info.getProperty("retentionTime"));
+    Assert.assertEquals( "v1", info.getLabel("l1"));
+    Assert.assertEquals( "v2", info.getLabel("l2"));
+    Assert.assertEquals( null, info.getLabel("l3"));
+    
+    Rule rule = info.getRule("dest");
+    Assert.assertEquals( "dest", rule.getTarget());
+    Assert.assertEquals( 100L, rule.getValue());
+    Assert.assertEquals( Aggregation.AVG, rule.getAggregation());
     try {
       client.info("seriesInfo1");
       Assert.fail();

@@ -463,17 +463,19 @@ public class RedisTimeSeries {
           properties.put(prop, (Long)value);
         } else {
           if(prop.equals("labels")) {
-            List<Object> labelsList = (List<Object>)value;
-            for(int j=0; j<labelsList.size() ; j+=2) {
-              labels.put( SafeEncoder.encode((byte[])labelsList.get(j)), SafeEncoder.encode((byte[])labelsList.get(j+1)));
+            List<List<byte[]>> labelsList = (List<List<byte[]>>)value;
+            for(List<byte[]> labelBytes : labelsList) {
+              labels.put( SafeEncoder.encode((byte[])labelBytes.get(0)), SafeEncoder.encode((byte[])labelBytes.get(1)));
             }
           }
-          //       TODO   else if(prop.equals("rules") ) {
-          //            List<Object> rulesList = (List<Object>)value;
-          //            for(int j=0; j<labelsList.size() ; j+=2) {
-          //              labels.put( SafeEncoder.encode((byte[])labelsList.get(j)), SafeEncoder.encode((byte[])labelsList.get(j+1)));
-          //            }
-          //          } 
+          else if(prop.equals("rules") ) {
+            List<List<Object>> rulesList = (List<List<Object>>)value;
+            for(List<Object> ruleBytes : rulesList) {
+              String target = SafeEncoder.encode((byte[])ruleBytes.get(0));
+              String agg = SafeEncoder.encode((byte[])ruleBytes.get(2));
+              rules.put( target , new Rule( target, (Long)ruleBytes.get(1), Aggregation.valueOf(agg)));
+            }
+          } 
         }
       }
       return new Info(properties, labels, rules);
