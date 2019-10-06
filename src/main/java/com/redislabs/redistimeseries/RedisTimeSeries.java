@@ -355,7 +355,6 @@ public class RedisTimeSeries {
   /**
    * TS.RANGEBYLABELS key (labels) fromTimestamp toTimestamp [aggregationType] [retentionTime]
    * 
-   * @param key
    * @param from
    * @param to
    * @param aggregation
