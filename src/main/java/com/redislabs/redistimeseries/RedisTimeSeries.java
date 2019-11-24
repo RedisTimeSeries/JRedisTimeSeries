@@ -182,6 +182,20 @@ public class RedisTimeSeries {
     }
   }
 
+  /**
+   * TS.ADD key * value
+   * 
+   * @param sourceKey
+   * @param value
+   * @return
+   */
+  public long add(String sourceKey, double value) {
+    try (Jedis conn = getConnection()) {
+      return sendCommand(conn, Command.ADD, SafeEncoder.encode(sourceKey), 
+          STAR, Protocol.toByteArray(value))
+          .getIntegerReply();
+    }
+  }
 
   /**
    * TS.ADD key timestamp value
@@ -410,36 +424,64 @@ public class RedisTimeSeries {
   }
 
   /**
-   * TS.INCRBY key value [RESET time-bucket]
+   * TS.INCRBY key value
    * 
    * @param key
    * @param value
-   * @param timeBucket
    * @return
    */
-  public boolean incrBy(String key, int value, long timeBucket) {
+  public long incrBy(String key, int value) {
     try (Jedis conn = getConnection()) {
-      return sendCommand(conn, Command.INCRBY, SafeEncoder.encode(key), Protocol.toByteArray(value), 
-          Keyword.RESET.getRaw(), Protocol.toByteArray(timeBucket)) 
-          .getStatusCodeReply().equals("OK");
+      return sendCommand(conn, Command.INCRBY, SafeEncoder.encode(key), Protocol.toByteArray(value)) 
+          .getIntegerReply();
     }
   }
 
   /**
-   * TS.DECRBY key [VALUE] [RESET] [TIME_BUCKET]
+   * TS.INCRBY key value [TIMESTAMP timestamp]
    * 
    * @param key
    * @param value
-   * @param timeBucket
+   * @param timestamp
    * @return
    */
-  public boolean decrBy(String key, int value, long timeBucket) {
+  public long incrBy(String key, int value, long timestamp) {
     try (Jedis conn = getConnection()) {
-      return sendCommand(conn, Command.DECRBY, SafeEncoder.encode(key), Protocol.toByteArray(value), 
-          Keyword.RESET.getRaw(),  Protocol.toByteArray(timeBucket)) 
-          .getStatusCodeReply().equals("OK");
+      return sendCommand(conn, Command.INCRBY, SafeEncoder.encode(key), Protocol.toByteArray(value),
+          Keyword.TIMESTAMP.getRaw(), Protocol.toByteArray(timestamp)) 
+          .getIntegerReply();
     }
   }
+
+  /**
+   * TS.DECRBY key value
+   * 
+   * @param key
+   * @param value
+   * @return
+   */
+  public long decrBy(String key, int value) {
+    try (Jedis conn = getConnection()) {
+      return sendCommand(conn, Command.DECRBY, SafeEncoder.encode(key), Protocol.toByteArray(value)) 
+          .getIntegerReply();
+    }
+  }
+
+  /**
+   * TS.DECRBY key value [TIMESTAMP timestamp] 
+   * 
+   * @param key
+   * @param value
+   * @param timestamp
+   * @return
+   */
+  public long decrBy(String key, int value, long timestamp) {
+    try (Jedis conn = getConnection()) {
+      return sendCommand(conn, Command.DECRBY, SafeEncoder.encode(key), Protocol.toByteArray(value),
+          Keyword.TIMESTAMP.getRaw(), Protocol.toByteArray(timestamp))
+          .getIntegerReply();
+    }
+  }  
 
   /**
    * TS.INFO key

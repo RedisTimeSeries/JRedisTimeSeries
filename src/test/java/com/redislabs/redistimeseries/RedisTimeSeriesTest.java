@@ -215,7 +215,7 @@ public class RedisTimeSeriesTest {
     long add3 = client.add("seriesAdd2", 0, 3.2, 10000);
     Assert.assertTrue(add3>add2);
     Thread.sleep(1);
-    long add4 = client.add("seriesAdd2", 0, -1.2);
+    long add4 = client.add("seriesAdd2", -1.2);
     Assert.assertTrue(add4>add3);
     Thread.sleep(1);
     long endTime = System.currentTimeMillis();
@@ -256,15 +256,22 @@ public class RedisTimeSeriesTest {
   }
 
   @Test
-  public void testIncDec() {
+  public void testIncDec() throws InterruptedException {
     Assert.assertTrue(client.create("seriesIncDec", 100*1000/*100sec retentionTime*/));   
-    Assert.assertTrue( client.add("seriesIncDec", -1, 1, 10000, null)-System.currentTimeMillis() < 100 );
-    Assert.assertTrue(client.incrBy("seriesIncDec", 3, 1000));
-    Assert.assertTrue(client.decrBy("seriesIncDec", 2, 1000));
+    long startTime = System.currentTimeMillis();
+    Assert.assertEquals(startTime, client.add("seriesIncDec", -1, 1, 10000, null), 1.0);
+        
+    Thread.sleep(1);
+    startTime = System.currentTimeMillis();
+    Assert.assertEquals(startTime, client.incrBy("seriesIncDec", 3), 1.0);
+
+    Thread.sleep(1);
+    startTime = System.currentTimeMillis();
+    Assert.assertEquals(startTime, client.decrBy("seriesIncDec", 2, startTime), 1.0);
 
     Value[] values = client.range("seriesIncDec", 1L, Long.MAX_VALUE);
-    Assert.assertEquals(1, values.length);
-    Assert.assertEquals(2, values[0].getValue(), 0);
+    Assert.assertEquals(3, values.length);
+    Assert.assertEquals(2, values[2].getValue(), 0);
   }
 
   @Test

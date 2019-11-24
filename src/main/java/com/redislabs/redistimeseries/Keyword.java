@@ -9,7 +9,8 @@ public enum Keyword implements ProtocolCommand{
     FILTER,    
     AGGREGATION, 
     LABELS, 
-    RETENTION;
+    RETENTION,
+    TIMESTAMP;
     
     private final byte[] raw;
 
