@@ -263,11 +263,11 @@ public class RedisTimeSeriesTest {
         
     Thread.sleep(1);
     startTime = System.currentTimeMillis();
-    Assert.assertEquals(startTime, client.incrBy("seriesIncDec", 3), 1.0);
+    Assert.assertEquals(startTime, client.incrBy("seriesIncDec", 3, startTime), 2.0);
 
     Thread.sleep(1);
     startTime = System.currentTimeMillis();
-    Assert.assertEquals(startTime, client.decrBy("seriesIncDec", 2, startTime), 1.0);
+    Assert.assertEquals(startTime, client.decrBy("seriesIncDec", 2, startTime), 2.0);
     
     Value[] values = client.range("seriesIncDec", 1L, Long.MAX_VALUE);
     Assert.assertEquals(3, values.length);
