@@ -268,10 +268,22 @@ public class RedisTimeSeriesTest {
     Thread.sleep(1);
     startTime = System.currentTimeMillis();
     Assert.assertEquals(startTime, client.decrBy("seriesIncDec", 2, startTime), 1.0);
-
+    
     Value[] values = client.range("seriesIncDec", 1L, Long.MAX_VALUE);
     Assert.assertEquals(3, values.length);
     Assert.assertEquals(2, values[2].getValue(), 0);
+    
+    Thread.sleep(1);
+    startTime = System.currentTimeMillis();
+    Assert.assertEquals(startTime, client.incrBy("seriesIncDec", 3), 2.0);
+
+    Thread.sleep(1);
+    startTime = System.currentTimeMillis();
+    Assert.assertEquals(startTime, client.decrBy("seriesIncDec", 2), 2.0);
+    
+    values = client.range("seriesIncDec", 1L, Long.MAX_VALUE);
+    Assert.assertEquals(5, values.length);
+    Assert.assertEquals(3, values[4].getValue(), 0);
   }
 
   @Test
