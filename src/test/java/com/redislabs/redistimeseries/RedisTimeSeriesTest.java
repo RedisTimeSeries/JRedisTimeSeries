@@ -141,7 +141,7 @@ public class RedisTimeSeriesTest {
 
     Range range = ranges[0];
     Assert.assertEquals("seriesAdd", range.getKey());
-    Assert.assertEquals(labels, range.getLables());
+    Assert.assertEquals(new HashMap<>(), range.getLables());
 
     Value[] rangeValues = range.getValues();
     Assert.assertEquals(4, rangeValues.length);
