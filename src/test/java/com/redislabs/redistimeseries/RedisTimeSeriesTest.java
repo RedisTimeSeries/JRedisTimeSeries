@@ -157,15 +157,18 @@ public class RedisTimeSeriesTest {
     labels2.put("l3", "v3");
     labels2.put("l4", "v4");    
     Assert.assertEquals(1000L, client.add("seriesAdd2", 1000L, 1.1, 10000, labels2));
-    Range[] ranges2 = client.mrange(500L, 4600L, Aggregation.COUNT, 1, "l4=v4");
+    Range[] ranges2 = client.mrange(500L, 4600L, Aggregation.COUNT, 1, true, "l4=v4");
     Assert.assertEquals(1, ranges2.length);
+    Assert.assertEquals(labels2, ranges2[0].getLables());
     
     Map<String, String> labels3 = new HashMap<>();
     labels3.put("l3", "v33");
     labels3.put("l4", "v4");    
     Assert.assertEquals(1000L, client.add("seriesAdd3", 1000L, 1.1, labels3));
-    Range[] ranges3 = client.mrange(500L, 4600L, Aggregation.COUNT, 1, "l4=v4");
+    Range[] ranges3 = client.mrange(500L, 4600L, Aggregation.COUNT, 1, true, "l4=v4");
     Assert.assertEquals(2, ranges3.length);
+    Assert.assertEquals(labels2, ranges3[0].getLables());
+    Assert.assertEquals(labels3, ranges3[1].getLables());
 
     // Failure cases
     try {

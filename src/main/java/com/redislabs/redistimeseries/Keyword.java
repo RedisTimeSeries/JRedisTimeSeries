@@ -10,7 +10,8 @@ public enum Keyword implements ProtocolCommand{
     AGGREGATION, 
     LABELS, 
     RETENTION,
-    TIMESTAMP;
+    TIMESTAMP,
+    WITHLABELS;
     
     private final byte[] raw;
 

@@ -365,9 +365,10 @@ public class RedisTimeSeries {
     }
   }
 
-
   /**
-   * TS.RANGEBYLABELS key (labels) fromTimestamp toTimestamp [aggregationType] [retentionTime]
+   * TS.MRANGE fromTimestamp toTimestamp [COUNT count] [AGGREGATION aggregationType timeBucket] FILTER filter.
+   * </br>
+   * Similar to calling <code>mrange(from, to, aggregation, retentionTime, false, filters)</code>
    * 
    * @param from
    * @param to
@@ -377,16 +378,33 @@ public class RedisTimeSeries {
    * @return
    */
   public Range[] mrange(long from, long to, Aggregation aggregation, long retentionTime, String... filters) {
+    return mrange(from, to, aggregation, retentionTime, false /*withLabels*/, filters);
+  }
+  
+  /**
+   * TS.MRANGE fromTimestamp toTimestamp [COUNT count] [AGGREGATION aggregationType timeBucket] [WITHLABELS] FILTER filter..
+   * 
+   * @param from
+   * @param to
+   * @param aggregation
+   * @param retentionTime
+   * @param withLabels <code>true</code> if the labels should be returned for each range
+   * @param filters
+   * @return
+   */
+  public Range[] mrange(long from, long to, Aggregation aggregation, long retentionTime, boolean withLabels, String... filters) {
     try (Jedis conn = getConnection()) {
 
-      byte[][] args = new byte[6 + (filters==null ? 0 : filters.length)][];
-      int i=0;
-
+      byte[][] args = new byte[6 + (filters==null ? 0 : filters.length) + (withLabels?1:0)][];
+      int i=0;     
       args[i++] = Protocol.toByteArray(from);
       args[i++] = Protocol.toByteArray(to);
       args[i++] = Keyword.AGGREGATION.getRaw();
       args[i++] = aggregation.getRaw();
       args[i++] = Protocol.toByteArray(retentionTime);
+      if(withLabels) {
+        args[i++] = Keyword.WITHLABELS.getRaw();
+      }
 
       args[i++] = Keyword.FILTER.getRaw();
       if(filters != null) {
