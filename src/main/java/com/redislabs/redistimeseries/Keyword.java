@@ -11,7 +11,8 @@ public enum Keyword implements ProtocolCommand{
     LABELS, 
     RETENTION,
     TIMESTAMP,
-    WITHLABELS;
+    WITHLABELS,
+    COUNT;
     
     private final byte[] raw;
 

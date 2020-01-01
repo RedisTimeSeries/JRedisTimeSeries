@@ -315,6 +315,22 @@ public class RedisTimeSeries {
     }
   }
 
+  private Value[] range(byte[]... args) {
+    try (Jedis conn = getConnection()) {
+      List<Object> range = sendCommand(conn, Command.RANGE, args)
+          .getObjectMultiBulkReply();
+
+      Value[] values = new Value[range.size()];
+
+      for(int i=0; i<values.length ; ++i) {
+        List<Object> touple = (List<Object>)range.get(i);
+        values[i] = new Value((Long)touple.get(0), Double.parseDouble(SafeEncoder.encode((byte[])touple.get(1))));
+      }
+      return values;
+    }
+  }
+  
+  
   /**
    * TS.RANGE key fromTimestamp toTimestamp
    * 
@@ -323,62 +339,115 @@ public class RedisTimeSeries {
    * @param to
    * @return
    */
-  public Value[] range(String key, long from, long to) {
-    try (Jedis conn = getConnection()) {
-      List<Object> range = sendCommand(conn, Command.RANGE, SafeEncoder.encode(key), Protocol.toByteArray(from), Protocol.toByteArray(to))
-          .getObjectMultiBulkReply();
-
-      Value[] values = new Value[range.size()];
-
-      for(int i=0; i<values.length ; ++i) {
-        List<Object> touple = (List<Object>)range.get(i);
-        values[i] = new Value((Long)touple.get(0), Double.parseDouble(SafeEncoder.encode((byte[])touple.get(1))));
-      }
-      return values;
-    }
+  public Value[] range(String key, long from, long to) {  
+      return range(SafeEncoder.encode(key), Protocol.toByteArray(from), Protocol.toByteArray(to));
+  }
+  
+  /**
+   * TS.RANGE key fromTimestamp toTimestamp [COUNT count] 
+   * 
+   * @param key
+   * @param from
+   * @param to
+   * @param count
+   * @return
+   */
+  public Value[] range(String key, long from, long to, int count) {  
+      return range(SafeEncoder.encode(key), Protocol.toByteArray(from), Protocol.toByteArray(to),
+          Keyword.COUNT.getRaw(), Protocol.toByteArray(count));
   }
 
   /**
-   * TS.RANGE key fromTimestamp toTimestamp [AGGREGATION aggregationType
-   * retentionTime]
+   * TS.RANGE key fromTimestamp toTimestamp [AGGREGATION aggregationType timeBucket]
    * 
    * @param key
    * @param from
    * @param to
    * @param aggregation
-   * @param retentionTime
+   * @param timeBucket
    * @return
    */
-  public Value[] range(String key, long from, long to, Aggregation aggregation, long retentionTime) {
-    try (Jedis conn = getConnection()) {
-      List<Object> range = sendCommand(conn, Command.RANGE, SafeEncoder.encode(key), Protocol.toByteArray(from), 
-          Protocol.toByteArray(to), Keyword.AGGREGATION.getRaw(), aggregation.getRaw(), Protocol.toByteArray(retentionTime))
-          .getObjectMultiBulkReply();
-
-      Value[] values = new Value[range.size()];
-
-      for(int i=0; i<values.length ; ++i) {
-        List<Object> touple = (List<Object>)range.get(i);
-        values[i] = new Value((Long)touple.get(0), Double.parseDouble(SafeEncoder.encode((byte[])touple.get(1))));
-      }
-      return values;
-    }
+  public Value[] range(String key, long from, long to, Aggregation aggregation, long timeBucket) {
+      return range(SafeEncoder.encode(key), Protocol.toByteArray(from), Protocol.toByteArray(to), 
+          Keyword.AGGREGATION.getRaw(), aggregation.getRaw(), Protocol.toByteArray(timeBucket));
+  }
+  
+  /**
+   * TS.RANGE key fromTimestamp toTimestamp [AGGREGATION aggregationType timeBucket] [COUNT count] 
+   * 
+   * @param key
+   * @param from
+   * @param to
+   * @param aggregation
+   * @param timeBucket
+   * @param count
+   * @return
+   */
+  public Value[] range(String key, long from, long to, Aggregation aggregation, long timeBucket, int count) {
+      return range(SafeEncoder.encode(key), Protocol.toByteArray(from), Protocol.toByteArray(to), 
+          Keyword.AGGREGATION.getRaw(), aggregation.getRaw(), Protocol.toByteArray(timeBucket), 
+          Keyword.COUNT.getRaw(), Protocol.toByteArray(count));
   }
 
   /**
-   * TS.MRANGE fromTimestamp toTimestamp [COUNT count] [AGGREGATION aggregationType timeBucket] FILTER filter.
+   * TS.MRANGE fromTimestamp toTimestamp FILTER filter.
    * </br>
-   * Similar to calling <code>mrange(from, to, aggregation, retentionTime, false, filters)</code>
+   * Similar to calling <code>mrange(from, to, null, 0, false, Integer.MAX_VALUE, filters)</code>
+   * 
+   * @param from
+   * @param to
+   * @param filters
+   * @return
+   */
+  public Range[] mrange(long from, long to, String... filters) {
+    return mrange(from, to, null /*aggregation*/, 0 /*timeBucket*/, filters);
+  }
+  
+  /**
+   * TS.MRANGE fromTimestamp toTimestamp [COUNT count] FILTER filter.
+   * </br>
+   * Similar to calling <code>mrange(from, to, null, 0, false, Integer.MAX_VALUE, filters)</code>
+   * 
+   * @param from
+   * @param to
+   * @param count
+   * @param filters
+   * @return
+   */
+  public Range[] mrange(long from, long to, int count, String... filters) {
+    return mrange(from, to, null /*aggregation*/, 0 /*timeBucket*/, false /*withLabels*/, count, filters);
+  }
+  
+  /**
+   * TS.MRANGE fromTimestamp toTimestamp [AGGREGATION aggregationType timeBucket] FILTER filter.
+   * </br>
+   * Similar to calling <code>mrange(from, to, aggregation, retentionTime, false, Integer.MAX_VALUE, filters)</code>
    * 
    * @param from
    * @param to
    * @param aggregation
-   * @param retentionTime
+   * @param timeBucket
    * @param filters
    * @return
    */
-  public Range[] mrange(long from, long to, Aggregation aggregation, long retentionTime, String... filters) {
-    return mrange(from, to, aggregation, retentionTime, false /*withLabels*/, filters);
+  public Range[] mrange(long from, long to, Aggregation aggregation, long timeBucket, String... filters) {
+    return mrange(from, to, aggregation, timeBucket, false /*withLabels*/, filters);
+  }
+  
+  /**
+   * TS.MRANGE fromTimestamp toTimestamp [AGGREGATION aggregationType timeBucket] FILTER filter.
+   * </br>
+   * Similar to calling <code>mrange(from, to, aggregation, retentionTime, false, Integer.MAX_VALUE, filters)</code>
+   * 
+   * @param from
+   * @param to
+   * @param aggregation
+   * @param timeBucket
+   * @param filters
+   * @return
+   */
+  public Range[] mrange(long from, long to, Aggregation aggregation, long timeBucket, boolean withLabels, String... filters) {
+    return mrange(from, to, aggregation, timeBucket, withLabels, Integer.MAX_VALUE /*count*/, filters);
   }
   
   /**
@@ -387,23 +456,30 @@ public class RedisTimeSeries {
    * @param from
    * @param to
    * @param aggregation
-   * @param retentionTime
+   * @param timeBucket
    * @param withLabels <code>true</code> if the labels should be returned for each range
+   * @param count
    * @param filters
    * @return
    */
-  public Range[] mrange(long from, long to, Aggregation aggregation, long retentionTime, boolean withLabels, String... filters) {
+  public Range[] mrange(long from, long to, Aggregation aggregation, long timeBucket, boolean withLabels, int count, String... filters) {
     try (Jedis conn = getConnection()) {
 
-      byte[][] args = new byte[6 + (filters==null ? 0 : filters.length) + (withLabels?1:0)][];
+      byte[][] args = new byte[3 + (filters==null?0:filters.length) + (aggregation==null?0:3) + (withLabels?1:0) + (count==Integer.MAX_VALUE?0:2)][];
       int i=0;     
       args[i++] = Protocol.toByteArray(from);
       args[i++] = Protocol.toByteArray(to);
-      args[i++] = Keyword.AGGREGATION.getRaw();
-      args[i++] = aggregation.getRaw();
-      args[i++] = Protocol.toByteArray(retentionTime);
+      if(aggregation!= null) {
+        args[i++] = Keyword.AGGREGATION.getRaw();
+        args[i++] = aggregation.getRaw();
+        args[i++] = Protocol.toByteArray(timeBucket);
+      }
       if(withLabels) {
         args[i++] = Keyword.WITHLABELS.getRaw();
+      }
+      if(count != Integer.MAX_VALUE) {
+        args[i++] = Keyword.COUNT.getRaw();
+        args[i++] = Protocol.toByteArray(count);
       }
 
       args[i++] = Keyword.FILTER.getRaw();
