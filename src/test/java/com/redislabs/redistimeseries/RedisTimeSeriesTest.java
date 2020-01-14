@@ -205,6 +205,21 @@ public class RedisTimeSeriesTest {
   }
   
   @Test
+  public void testValue() {
+    Value v = new Value(1234, 234.89634);
+    Assert.assertEquals(1234, v.getTime());
+    Assert.assertEquals(234.89634, v.getValue(), 0);
+    
+    Assert.assertTrue(v.equals(new Value(1234, 234.89634)));
+    Assert.assertFalse(v.equals(new Value(1334, 234.89634)));
+    Assert.assertFalse(v.equals(new Value(1234, 234.8934)));
+    Assert.assertFalse(v.equals(1234));
+    
+    Assert.assertEquals("(1234:234.89634)", v.toString());
+    Assert.assertEquals(-1856758940, v.hashCode());
+  }
+  
+  @Test
   public void testAddStar() throws InterruptedException {
     Map<String, String> labels = new HashMap<>();
     labels.put("l11", "v11");
