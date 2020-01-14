@@ -157,15 +157,22 @@ public class RedisTimeSeriesTest {
     labels2.put("l3", "v3");
     labels2.put("l4", "v4");    
     Assert.assertEquals(1000L, client.add("seriesAdd2", 1000L, 1.1, 10000, labels2));
-    Range[] ranges2 = client.mrange(500L, 4600L, Aggregation.COUNT, 1, "l4=v4");
+    Range[] ranges2 = client.mrange(500L, 4600L, Aggregation.COUNT, 1, true, "l4=v4");
     Assert.assertEquals(1, ranges2.length);
+    Assert.assertEquals(labels2, ranges2[0].getLables());
     
     Map<String, String> labels3 = new HashMap<>();
     labels3.put("l3", "v33");
     labels3.put("l4", "v4");    
     Assert.assertEquals(1000L, client.add("seriesAdd3", 1000L, 1.1, labels3));
-    Range[] ranges3 = client.mrange(500L, 4600L, Aggregation.COUNT, 1, "l4=v4");
+    Assert.assertEquals(2000L, client.add("seriesAdd3", 2000L, 1.1, labels3));
+    Assert.assertEquals(3000L, client.add("seriesAdd3", 3000L, 1.1, labels3));
+    Range[] ranges3 = client.mrange(500L, 4600L, Aggregation.AVG, 1, true, 2, "l4=v4");
     Assert.assertEquals(2, ranges3.length);
+    Assert.assertEquals(1, ranges3[0].getValues().length);
+    Assert.assertEquals(labels2, ranges3[0].getLables());
+    Assert.assertEquals(2, ranges3[1].getValues().length);
+    Assert.assertEquals(labels3, ranges3[1].getLables());
 
     // Failure cases
     try {
@@ -195,6 +202,21 @@ public class RedisTimeSeriesTest {
     } catch(JedisDataException e) {
       // Error on creating same rule twice
     }
+  }
+  
+  @Test
+  public void testValue() {
+    Value v = new Value(1234, 234.89634);
+    Assert.assertEquals(1234, v.getTime());
+    Assert.assertEquals(234.89634, v.getValue(), 0);
+    
+    Assert.assertTrue(v.equals(new Value(1234, 234.89634)));
+    Assert.assertFalse(v.equals(new Value(1334, 234.89634)));
+    Assert.assertFalse(v.equals(new Value(1234, 234.8934)));
+    Assert.assertFalse(v.equals(1234));
+    
+    Assert.assertEquals("(1234:234.89634)", v.toString());
+    Assert.assertEquals(-1856758940, v.hashCode());
   }
   
   @Test
@@ -238,18 +260,20 @@ public class RedisTimeSeriesTest {
         new Measurement("seriesAdd1", 0L, 1.1), // System time
         new Measurement("seriesAdd2", 2000L, 3.2),
         new Measurement("seriesAdd1", 1500L, 2.67), // Should return an error
-        new Measurement("seriesAdd2", 3200L, 54.2));
+        new Measurement("seriesAdd2", 3200L, 54.2),
+        new Measurement("seriesAdd2", 4300L, 21.2));
     
     Assert.assertTrue(now <= (Long)result.get(0) && now+5 > (Long)result.get(0));
     Assert.assertEquals(2000L, result.get(1));
     Assert.assertTrue( result.get(2) instanceof JedisDataException);
     Assert.assertEquals(3200L, result.get(3));
+    Assert.assertEquals(4300L, result.get(4));
     
     Value[] values1 = client.range("seriesAdd1", 0, Long.MAX_VALUE);
     Assert.assertEquals(1, values1.length);
     Assert.assertEquals(1.1, values1[0].getValue(), 0.001);
 
-    Value[] values2 = client.range("seriesAdd2", 0, Long.MAX_VALUE);
+    Value[] values2 = client.range("seriesAdd2", 0, Long.MAX_VALUE, 2);
     Assert.assertEquals(2, values2.length);
     Assert.assertEquals(3.2, values2[0].getValue(), 0.001);
     Assert.assertEquals(54.2, values2[1].getValue(), 0.001);
