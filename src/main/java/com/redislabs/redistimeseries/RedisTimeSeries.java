@@ -128,15 +128,31 @@ public class RedisTimeSeries {
    * @param labels
    * @return
    */
-  public boolean create(String key, long retentionTime, Map<String, String> labels){   
+  public boolean create(String key, long retentionTime, Map<String, String> labels){
+    return create(key, retentionTime, false, labels);
+  }
+  
+  /**
+   * TS.CREATE key [RETENTION retentionTime] [UNCOMPRESSED] [LABELS field value..]
+   * 
+   * @param key
+   * @param retentionTime
+   * @param uncompressed
+   * @param labels
+   * @return
+   */
+  public boolean create(String key, long retentionTime, boolean uncompressed, Map<String, String> labels){   
     try (Jedis conn = getConnection()) {
 
-      byte[][] args = new byte[3 + (labels==null ? 0 : 2*labels.size()+1)][];
+      byte[][] args = new byte[3 + (labels==null ? 0 : 2*labels.size()+1) + (uncompressed?1:0)][];
       int i=0;
       
       args[i++] = SafeEncoder.encode(key);
       args[i++] = Keyword.RETENTION.getRaw();
       args[i++] = Protocol.toByteArray(retentionTime);
+      if(uncompressed) {
+        args[i++] = Keyword.UNCOMPRESSED.getRaw();
+      }
       
       if(labels != null) {
         args[i++] = Keyword.LABELS.getRaw();
@@ -267,13 +283,29 @@ public class RedisTimeSeries {
    * @param timestamp
    * @param value
    * @param retentionTime
+   * @param uncompressed
    * @param labels
    * @return
    */
   public long add(String sourceKey, long timestamp, double value, long retentionTime, Map<String, String> labels) {
+    return add(sourceKey, timestamp, value, retentionTime, false, labels);
+  }
+
+  /**
+   * TS.ADD key timestamp value [RETENTION retentionTime] UNCOMPRESSED [LABELS field value..]
+   * 
+   * @param sourceKey
+   * @param timestamp
+   * @param value
+   * @param retentionTime
+   * @param uncompressed
+   * @param labels
+   * @return
+   */
+  public long add(String sourceKey, long timestamp, double value, long retentionTime, boolean uncompressed, Map<String, String> labels) {
     try (Jedis conn = getConnection()) {
 
-      byte[][] args = new byte[5 + (labels==null ? 0 : 2*labels.size()+1)][];
+      byte[][] args = new byte[5 + (labels==null ? 0 : 2*labels.size()+1) + (uncompressed?1:0)][];
       int i=0;
 
       args[i++] = SafeEncoder.encode(sourceKey);
@@ -281,6 +313,9 @@ public class RedisTimeSeries {
       args[i++] = Protocol.toByteArray(value);
       args[i++] = Keyword.RETENTION.getRaw();
       args[i++] = Protocol.toByteArray(retentionTime);
+      if(uncompressed) {
+        args[i++] = Keyword.UNCOMPRESSED.getRaw();
+      }
 
       if(labels != null) {
         args[i++] = Keyword.LABELS.getRaw();

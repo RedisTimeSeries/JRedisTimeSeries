@@ -52,6 +52,11 @@ public class RedisTimeSeriesTest {
     try (Jedis conn = pool.getResource()) {
       Assert.assertEquals("TSDB-TYPE", conn.type("series4"));
     }
+    
+    Assert.assertTrue(client.create("series5", 56/*retentionTime*/, true, labels));
+    try (Jedis conn = pool.getResource()) {
+      Assert.assertEquals("TSDB-TYPE", conn.type("series5"));
+    }
 
     try {
       Assert.assertTrue(client.create("series1", 10/*retentionTime*/, labels));
