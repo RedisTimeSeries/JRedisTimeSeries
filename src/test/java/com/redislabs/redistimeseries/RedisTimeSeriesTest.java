@@ -318,6 +318,35 @@ public class RedisTimeSeriesTest {
   }
 
   @Test
+  public void testGet(){
+    Assert.assertTrue(client.create("seriesGet", 100*1000/*100sec retentionTime*/));   
+    Assert.assertNull(client.get("seriesGet"));
+    
+    
+  }
+  
+  @Test
+  public void testMGet(){
+    Map<String, String> labels = new HashMap<>();
+    labels.put("l1", "v1");
+    labels.put("l2", "v2");
+    Assert.assertTrue(client.create("seriesMGet1", 100*1000/*100sec retentionTime*/, labels));
+    Assert.assertTrue(client.create("seriesMGet2", 100*1000/*100sec retentionTime*/, labels));
+    
+    Range[] ranges1 = client.mget(false, "l1=v2");
+    Assert.assertEquals(0, ranges1.length);
+    
+    Range[] ranges2 = client.mget(true, "l1=v1");
+    Assert.assertEquals(2, ranges2.length);
+    
+    client.add("seriesMGet", 1500, 1.3);
+    Range[] ranges3 = client.mget(false, "l1=v1");
+    Assert.assertEquals(2, ranges3.length);
+
+  }
+
+  
+  @Test
   public void testInfo() {
     Map<String, String> labels = new HashMap<>();
     labels.put("l1", "v1");
