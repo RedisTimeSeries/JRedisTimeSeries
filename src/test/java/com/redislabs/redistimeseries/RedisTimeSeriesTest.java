@@ -128,8 +128,10 @@ public class RedisTimeSeriesTest {
     Assert.assertEquals(3, values.length);
 
     values = client.range("seriesAdd", 500L, 4600L, Aggregation.STD_P, 2000L);
-    Assert.assertEquals(2, values.length);
-    Assert.assertEquals(0.9899494936611674, values[0].getValue(), 0.0000001);
+    Assert.assertEquals(3, values.length);
+    Assert.assertEquals(1.05, values[0].getValue(), 0.0000001);
+    Assert.assertEquals(0.0, values[1].getValue(), 0.0000001);
+    Assert.assertEquals(0.0, values[2].getValue(), 0.0000001);
     
     try {
       client.mrange(500L, 4600L, Aggregation.COUNT, 1);
