@@ -165,7 +165,62 @@ public class RedisTimeSeries {
       return sendCommand(conn, Command.CREATE, args).getStatusCodeReply().equals("OK");
     }
   }
+  
+  /**
+   * TS.ALTER key [LABELS label value..]
+   * @param key
+   * @param retentionTime
+   * @param labels
+   * @return
+   */
+  public boolean alter(String key, Map<String, String> labels) {
+    try (Jedis conn = getConnection()) {
 
+      byte[][] args = new byte[1 + (labels==null ? 0 : 2*labels.size()+1)][];
+      int i=0;
+      
+      args[i++] = SafeEncoder.encode(key);
+      
+      if(labels != null) {
+        args[i++] = Keyword.LABELS.getRaw();
+        for(Entry<String, String> e : labels.entrySet()) {
+          args[i++] = SafeEncoder.encode(e.getKey());  
+          args[i++] = SafeEncoder.encode(e.getValue());
+        }
+      }
+
+      return sendCommand(conn, Command.ALTER, args).getStatusCodeReply().equals("OK");
+    }
+  }
+   
+  /**
+   * TS.ALTER key [RETENTION retentionTime] [LABELS label value..]
+   * @param key
+   * @param retentionTime
+   * @param labels
+   * @return
+   */
+  public boolean alter(String key, long retentionTime, Map<String, String> labels) {
+    try (Jedis conn = getConnection()) {
+
+      byte[][] args = new byte[3 + (labels==null ? 0 : 2*labels.size()+1)][];
+      int i=0;
+      
+      args[i++] = SafeEncoder.encode(key);
+      args[i++] = Keyword.RETENTION.getRaw();
+      args[i++] = Protocol.toByteArray(retentionTime);
+      
+      if(labels != null) {
+        args[i++] = Keyword.LABELS.getRaw();
+        for(Entry<String, String> e : labels.entrySet()) {
+          args[i++] = SafeEncoder.encode(e.getKey());  
+          args[i++] = SafeEncoder.encode(e.getValue());
+        }
+      }
+
+      return sendCommand(conn, Command.ALTER, args).getStatusCodeReply().equals("OK");
+    }
+  }
 
   /**
    * TS.CREATERULE sourceKey destKey AGGREGATION aggType retentionTime
@@ -680,6 +735,17 @@ public class RedisTimeSeries {
           .getIntegerReply();
     }
   }  
+  
+  /**
+   * TS.QUERYINDEX filter... 
+   */
+  
+  public String[] queryIndex(String... filters) {
+    try (Jedis conn = getConnection()) {     
+      List<?> result = sendCommand(conn, Command.QUERYINDEX, SafeEncoder.encodeMany(filters)).getObjectMultiBulkReply();
+      return result.toArray(new String[result.size()]);
+    }
+  }
 
   /**
    * TS.INFO key
