@@ -332,17 +332,27 @@ public class RedisTimeSeriesTest {
     labels.put("l2", "v2");
     Assert.assertTrue(client.create("seriesMGet1", 100*1000/*100sec retentionTime*/, labels));
     Assert.assertTrue(client.create("seriesMGet2", 100*1000/*100sec retentionTime*/, labels));
-    
+   
+    // Test for empty result
     Range[] ranges1 = client.mget(false, "l1=v2");
     Assert.assertEquals(0, ranges1.length);
-    
+        
+    // Test for empty ranges
     Range[] ranges2 = client.mget(true, "l1=v1");
     Assert.assertEquals(2, ranges2.length);
+    Assert.assertEquals(labels, ranges2[0].getLables());
+    Assert.assertEquals(labels, ranges2[1].getLables());
+    Assert.assertEquals(0, ranges2[0].getValues().length);
     
-    client.add("seriesMGet", 1500, 1.3);
+    // Test for returned result on MGet 
+    client.add("seriesMGet1", 1500, 1.3);
     Range[] ranges3 = client.mget(false, "l1=v1");
     Assert.assertEquals(2, ranges3.length);
-
+    Assert.assertEquals(new HashMap<String, String>(), ranges3[0].getLables());
+    Assert.assertEquals(new HashMap<String, String>(), ranges3[1].getLables());
+    Assert.assertEquals(1, ranges3[0].getValues().length);
+    Assert.assertEquals(0, ranges3[1].getValues().length);
+    Assert.assertEquals(new Value(1500, 1.3), ranges3[0].getValues()[0]);
   }
 
   
