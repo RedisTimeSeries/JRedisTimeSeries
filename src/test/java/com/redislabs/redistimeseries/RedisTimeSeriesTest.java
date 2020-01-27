@@ -369,6 +369,23 @@ public class RedisTimeSeriesTest {
     Assert.assertEquals(new Value(1500, 1.3), ranges3[0].getValues()[0]);
   }
 
+  @Test
+  public void testQueryIndex(){
+
+    Map<String, String> labels = new HashMap<>();
+    labels.put("l1", "v1");
+    labels.put("l2", "v2");
+    Assert.assertTrue(client.create("seriesQueryIndex1", 100*1000/*100sec retentionTime*/, labels));
+    
+    labels.put("l2", "v22");
+    labels.put("l3", "v33");
+    Assert.assertTrue(client.create("seriesQueryIndex2", 100*1000/*100sec retentionTime*/, labels));
+   
+    Assert.assertArrayEquals( new String[0], client.queryIndex("l1=v2"));
+    Assert.assertArrayEquals( new String[]{"seriesQueryIndex1", "seriesQueryIndex2"}, client.queryIndex("l1=v1"));
+    Assert.assertArrayEquals( new String[]{"seriesQueryIndex2"}, client.queryIndex("l2=v22"));  
+  }
+  
   
   @Test
   public void testInfo() {

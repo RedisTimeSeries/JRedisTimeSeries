@@ -18,7 +18,7 @@ public enum Command implements ProtocolCommand{
     GET("TS.GET"),
     MGET("TS.MGET"),
     ALTER("TS.ALTER"),
-    QUERYINDEX("QUERYINDEX");
+    QUERYINDEX("TS.QUERYINDEX");
     
     private final byte[] raw;
 

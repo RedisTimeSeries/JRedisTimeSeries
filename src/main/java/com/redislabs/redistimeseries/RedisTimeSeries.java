@@ -742,7 +742,7 @@ public class RedisTimeSeries {
   
   public String[] queryIndex(String... filters) {
     try (Jedis conn = getConnection()) {     
-      List<?> result = sendCommand(conn, Command.QUERYINDEX, SafeEncoder.encodeMany(filters)).getObjectMultiBulkReply();
+      List<String> result = sendCommand(conn, Command.QUERYINDEX, SafeEncoder.encodeMany(filters)).getMultiBulkReply();
       return result.toArray(new String[result.size()]);
     }
   }
