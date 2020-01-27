@@ -319,10 +319,24 @@ public class RedisTimeSeriesTest {
 
   @Test
   public void testGet(){
-    Assert.assertTrue(client.create("seriesGet", 100*1000/*100sec retentionTime*/));   
+
+    // Test for empty result none existing series
+    try {
+      client.get("seriesGet");
+      Assert.fail();
+    }catch(JedisDataException e) {}
+
+    Assert.assertTrue(client.create("seriesGet", 100*1000/*100sec retentionTime*/));
+
+    // Test for empty result
     Assert.assertNull(client.get("seriesGet"));
-    
-    
+
+    // Test returned last Value
+    client.add("seriesGet", 2558, 8.7);
+    Assert.assertEquals(new Value(2558, 8.7), client.get("seriesGet"));
+
+    client.add("seriesGet", 3458, 1.117);
+    Assert.assertEquals(new Value(3458, 1.117), client.get("seriesGet"));    
   }
   
   @Test
