@@ -368,6 +368,34 @@ public class RedisTimeSeriesTest {
     Assert.assertEquals(0, ranges3[1].getValues().length);
     Assert.assertEquals(new Value(1500, 1.3), ranges3[0].getValues()[0]);
   }
+  
+  @Test
+  public void testAlter(){
+
+    Map<String, String> labels = new HashMap<>();
+    labels.put("l1", "v1");
+    labels.put("l2", "v2");
+    Assert.assertTrue(client.create("seriesAlter", 57*1000/*57sec retentionTime*/, labels));
+    Assert.assertArrayEquals( new String[0], client.queryIndex("l2=v22"));
+    
+    // Test alter labels
+    labels.remove("l1");
+    labels.put("l2", "v22");
+    labels.put("l3", "v33");
+    Assert.assertTrue(client.alter("seriesAlter", labels));
+    Assert.assertArrayEquals( new String[]{"seriesAlter"}, client.queryIndex("l2=v22", "l3=v33"));
+    Assert.assertArrayEquals( new String[0], client.queryIndex("l1=v1"));
+
+    // Test alter labels and retention time
+    labels.put("l1", "v11");
+    labels.remove("l2");
+    Assert.assertTrue(client.alter("seriesAlter", 324/*324ms retentionTime*/, labels));
+    Info info = client.info("seriesAlter");
+    Assert.assertEquals( (Long)324L, info.getProperty("retentionTime"));
+    Assert.assertEquals( "v11", info.getLabel("l1"));
+    Assert.assertEquals( null, info.getLabel("l2"));
+    Assert.assertEquals( "v33", info.getLabel("l3"));
+  }
 
   @Test
   public void testQueryIndex(){
