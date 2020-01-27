@@ -169,7 +169,6 @@ public class RedisTimeSeries {
   /**
    * TS.ALTER key [LABELS label value..]
    * @param key
-   * @param retentionTime
    * @param labels
    * @return
    */
@@ -626,7 +625,6 @@ public class RedisTimeSeries {
   /**
    * TS.MGET [WITHLABELS] FILTER filter...
    * 
-   * @param key
    * @param withLabels
    * @param filters
    * @return
