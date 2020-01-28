@@ -14,7 +14,11 @@ public enum Command implements ProtocolCommand{
     MADD("TS.MADD"),
     INCRBY("TS.INCRBY"),
     DECRBY("TS.DECRBY"),
-    INFO("TS.INFO");
+    INFO("TS.INFO"),
+    GET("TS.GET"),
+    MGET("TS.MGET"),
+    ALTER("TS.ALTER"),
+    QUERYINDEX("TS.QUERYINDEX");
     
     private final byte[] raw;
 

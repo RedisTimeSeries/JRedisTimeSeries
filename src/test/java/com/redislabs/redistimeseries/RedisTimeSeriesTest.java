@@ -318,6 +318,104 @@ public class RedisTimeSeriesTest {
   }
 
   @Test
+  public void testGet(){
+
+    // Test for empty result none existing series
+    try {
+      client.get("seriesGet");
+      Assert.fail();
+    }catch(JedisDataException e) {}
+
+    Assert.assertTrue(client.create("seriesGet", 100*1000/*100sec retentionTime*/));
+
+    // Test for empty result
+    Assert.assertNull(client.get("seriesGet"));
+
+    // Test returned last Value
+    client.add("seriesGet", 2558, 8.7);
+    Assert.assertEquals(new Value(2558, 8.7), client.get("seriesGet"));
+
+    client.add("seriesGet", 3458, 1.117);
+    Assert.assertEquals(new Value(3458, 1.117), client.get("seriesGet"));    
+  }
+  
+  @Test
+  public void testMGet(){
+    Map<String, String> labels = new HashMap<>();
+    labels.put("l1", "v1");
+    labels.put("l2", "v2");
+    Assert.assertTrue(client.create("seriesMGet1", 100*1000/*100sec retentionTime*/, labels));
+    Assert.assertTrue(client.create("seriesMGet2", 100*1000/*100sec retentionTime*/, labels));
+   
+    // Test for empty result
+    Range[] ranges1 = client.mget(false, "l1=v2");
+    Assert.assertEquals(0, ranges1.length);
+        
+    // Test for empty ranges
+    Range[] ranges2 = client.mget(true, "l1=v1");
+    Assert.assertEquals(2, ranges2.length);
+    Assert.assertEquals(labels, ranges2[0].getLables());
+    Assert.assertEquals(labels, ranges2[1].getLables());
+    Assert.assertEquals(0, ranges2[0].getValues().length);
+    
+    // Test for returned result on MGet 
+    client.add("seriesMGet1", 1500, 1.3);
+    Range[] ranges3 = client.mget(false, "l1=v1");
+    Assert.assertEquals(2, ranges3.length);
+    Assert.assertEquals(new HashMap<String, String>(), ranges3[0].getLables());
+    Assert.assertEquals(new HashMap<String, String>(), ranges3[1].getLables());
+    Assert.assertEquals(1, ranges3[0].getValues().length);
+    Assert.assertEquals(0, ranges3[1].getValues().length);
+    Assert.assertEquals(new Value(1500, 1.3), ranges3[0].getValues()[0]);
+  }
+  
+  @Test
+  public void testAlter(){
+
+    Map<String, String> labels = new HashMap<>();
+    labels.put("l1", "v1");
+    labels.put("l2", "v2");
+    Assert.assertTrue(client.create("seriesAlter", 57*1000/*57sec retentionTime*/, labels));
+    Assert.assertArrayEquals( new String[0], client.queryIndex("l2=v22"));
+    
+    // Test alter labels
+    labels.remove("l1");
+    labels.put("l2", "v22");
+    labels.put("l3", "v33");
+    Assert.assertTrue(client.alter("seriesAlter", labels));
+    Assert.assertArrayEquals( new String[]{"seriesAlter"}, client.queryIndex("l2=v22", "l3=v33"));
+    Assert.assertArrayEquals( new String[0], client.queryIndex("l1=v1"));
+
+    // Test alter labels and retention time
+    labels.put("l1", "v11");
+    labels.remove("l2");
+    Assert.assertTrue(client.alter("seriesAlter", 324/*324ms retentionTime*/, labels));
+    Info info = client.info("seriesAlter");
+    Assert.assertEquals( (Long)324L, info.getProperty("retentionTime"));
+    Assert.assertEquals( "v11", info.getLabel("l1"));
+    Assert.assertEquals( null, info.getLabel("l2"));
+    Assert.assertEquals( "v33", info.getLabel("l3"));
+  }
+
+  @Test
+  public void testQueryIndex(){
+
+    Map<String, String> labels = new HashMap<>();
+    labels.put("l1", "v1");
+    labels.put("l2", "v2");
+    Assert.assertTrue(client.create("seriesQueryIndex1", 100*1000/*100sec retentionTime*/, labels));
+    
+    labels.put("l2", "v22");
+    labels.put("l3", "v33");
+    Assert.assertTrue(client.create("seriesQueryIndex2", 100*1000/*100sec retentionTime*/, labels));
+   
+    Assert.assertArrayEquals( new String[0], client.queryIndex("l1=v2"));
+    Assert.assertArrayEquals( new String[]{"seriesQueryIndex1", "seriesQueryIndex2"}, client.queryIndex("l1=v1"));
+    Assert.assertArrayEquals( new String[]{"seriesQueryIndex2"}, client.queryIndex("l2=v22"));  
+  }
+  
+  
+  @Test
   public void testInfo() {
     Map<String, String> labels = new HashMap<>();
     labels.put("l1", "v1");

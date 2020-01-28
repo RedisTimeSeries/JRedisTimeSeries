@@ -165,7 +165,61 @@ public class RedisTimeSeries {
       return sendCommand(conn, Command.CREATE, args).getStatusCodeReply().equals("OK");
     }
   }
+  
+  /**
+   * TS.ALTER key [LABELS label value..]
+   * @param key
+   * @param labels
+   * @return
+   */
+  public boolean alter(String key, Map<String, String> labels) {
+    try (Jedis conn = getConnection()) {
 
+      byte[][] args = new byte[1 + (labels==null ? 0 : 2*labels.size()+1)][];
+      int i=0;
+      
+      args[i++] = SafeEncoder.encode(key);
+      
+      if(labels != null) {
+        args[i++] = Keyword.LABELS.getRaw();
+        for(Entry<String, String> e : labels.entrySet()) {
+          args[i++] = SafeEncoder.encode(e.getKey());  
+          args[i++] = SafeEncoder.encode(e.getValue());
+        }
+      }
+
+      return sendCommand(conn, Command.ALTER, args).getStatusCodeReply().equals("OK");
+    }
+  }
+   
+  /**
+   * TS.ALTER key [RETENTION retentionTime] [LABELS label value..]
+   * @param key
+   * @param retentionTime
+   * @param labels
+   * @return
+   */
+  public boolean alter(String key, long retentionTime, Map<String, String> labels) {
+    try (Jedis conn = getConnection()) {
+
+      byte[][] args = new byte[3 + (labels==null ? 0 : 2*labels.size()+1)][];
+      int i=0;
+      
+      args[i++] = SafeEncoder.encode(key);
+      args[i++] = Keyword.RETENTION.getRaw();
+      args[i++] = Protocol.toByteArray(retentionTime);
+      
+      if(labels != null) {
+        args[i++] = Keyword.LABELS.getRaw();
+        for(Entry<String, String> e : labels.entrySet()) {
+          args[i++] = SafeEncoder.encode(e.getKey());  
+          args[i++] = SafeEncoder.encode(e.getValue());
+        }
+      }
+
+      return sendCommand(conn, Command.ALTER, args).getStatusCodeReply().equals("OK");
+    }
+  }
 
   /**
    * TS.CREATERULE sourceKey destKey AGGREGATION aggType retentionTime
@@ -551,6 +605,74 @@ public class RedisTimeSeries {
       return ranges;
     }
   }
+  
+  /**
+   * TS.GET key
+   * 
+   * @param key
+   * @return
+   */
+  public Value get(String key) {
+    try (Jedis conn = getConnection()) {
+      List<?> touple = sendCommand(conn, Command.GET, SafeEncoder.encode(key)).getObjectMultiBulkReply();
+      if(touple.isEmpty()) {
+        return null;
+      }
+      return new Value((Long)touple.get(0), Double.parseDouble(SafeEncoder.encode((byte[])touple.get(1))));
+    }
+  }
+
+  /**
+   * TS.MGET [WITHLABELS] FILTER filter...
+   * 
+   * @param withLabels
+   * @param filters
+   * @return
+   */
+  public Range[] mget(boolean withLabels, String... filters) {
+    try (Jedis conn = getConnection()) {
+      byte[][] args = new byte[1 + (withLabels?1:0) + (filters==null?0:filters.length)][];
+      int i=0;     
+
+      if(withLabels) {
+        args[i++] = Keyword.WITHLABELS.getRaw();
+      }
+  
+      args[i++] = Keyword.FILTER.getRaw();
+      if(filters != null) {
+        for(String label : filters) {
+          args[i++] = SafeEncoder.encode(label);  
+        }
+      }
+          
+      List<?> result = sendCommand(conn, Command.MGET, args).getObjectMultiBulkReply();
+      Range[] ranges = new Range[result.size()];
+      for(int j=0; j<ranges.length; ++j) {
+        List<?> series = (List<?>)result.get(j);
+
+        String resKey = SafeEncoder.encode((byte[])series.get(0));
+
+        List<?> resLables = (List<?>)series.get(1);
+        Map<String, String> rangeLabels = new HashMap<>();
+        for(int l=0; l<resLables.size(); ++l) {
+          List<byte[]> label = (List<byte[]>)resLables.get(l);
+          rangeLabels.put( SafeEncoder.encode(label.get(0)), SafeEncoder.encode(label.get(1)));
+        }   
+
+        List<?> touple = (List<?>)series.get(2);
+        Value[] values;
+        if(touple.isEmpty()) {
+          values = new Value[0];
+        } else {
+          values = new Value[1];
+          values[0] = new Value((Long)touple.get(0), Double.parseDouble(SafeEncoder.encode((byte[])touple.get(1))));
+        }
+        
+        ranges[j] = new Range(resKey, rangeLabels, values);
+      }
+      return ranges;
+    }
+  }
 
   /**
    * TS.INCRBY key value
@@ -611,6 +733,17 @@ public class RedisTimeSeries {
           .getIntegerReply();
     }
   }  
+  
+  /**
+   * TS.QUERYINDEX filter... 
+   */
+  
+  public String[] queryIndex(String... filters) {
+    try (Jedis conn = getConnection()) {     
+      List<String> result = sendCommand(conn, Command.QUERYINDEX, SafeEncoder.encodeMany(filters)).getMultiBulkReply();
+      return result.toArray(new String[result.size()]);
+    }
+  }
 
   /**
    * TS.INFO key
