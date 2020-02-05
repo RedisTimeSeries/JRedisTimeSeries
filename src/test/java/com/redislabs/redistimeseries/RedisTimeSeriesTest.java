@@ -129,9 +129,17 @@ public class RedisTimeSeriesTest {
 
     values = client.range("seriesAdd", 500L, 4600L, Aggregation.STD_P, 2000L);
     Assert.assertEquals(3, values.length);
-    Assert.assertEquals(1.05, values[0].getValue(), 0.0000001);
+    Assert.assertEquals(0L, values[0].getTime());
+    Assert.assertEquals(0.0, values[0].getValue(), 0.0000001);
+    Assert.assertEquals(2000L, values[1].getTime());
     Assert.assertEquals(0.0, values[1].getValue(), 0.0000001);
+    Assert.assertEquals(4000L, values[2].getTime());
     Assert.assertEquals(0.0, values[2].getValue(), 0.0000001);
+
+    // ensure zero-based index
+    Value[] valuesZeroBased = client.range("seriesAdd", 0L, 4600L, Aggregation.STD_P, 2000L);
+    Assert.assertEquals(3, valuesZeroBased.length);
+    Assert.assertArrayEquals(values,valuesZeroBased);
     
     try {
       client.mrange(500L, 4600L, Aggregation.COUNT, 1);
