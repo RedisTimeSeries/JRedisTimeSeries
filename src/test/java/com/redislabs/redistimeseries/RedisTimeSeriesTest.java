@@ -1,8 +1,6 @@
 package com.redislabs.redistimeseries;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import org.junit.Assert;
 import org.junit.Before;
@@ -117,21 +115,47 @@ public class RedisTimeSeriesTest {
     Assert.assertTrue(client.create("seriesAdd", 10000L/*retentionTime*/, labels));
 
     Assert.assertEquals(1000L, client.add("seriesAdd", 1000L, 1.1, 10000, null));
-    Assert.assertEquals(2000L, client.add("seriesAdd", 2000L, 3.2, null));
-    Assert.assertEquals(3200L, client.add("seriesAdd", 3200L, 3.2, 10000));
-    Assert.assertEquals(4500L, client.add("seriesAdd", 4500L, -1.2));
+    Assert.assertEquals(2000L, client.add("seriesAdd", 2000L, 0.9, null));
+    Assert.assertEquals(3200L, client.add("seriesAdd", 3200L, 1.1, 10000));
+    Assert.assertEquals(4500L, client.add("seriesAdd", 4500L, -1.1));
 
+    Value[] rawValues = new  Value[]{new Value(1000L,1.1), new Value(2000L,0.9), new Value(3200L,1.1), new Value(4500L,-1.1) };
     Value[] values = client.range("seriesAdd", 800L, 3000L);
     Assert.assertEquals(2, values.length);
-    
+    Assert.assertArrayEquals(values, Arrays.copyOfRange(rawValues, 0, 2));
+    values = client.range("seriesAdd", 800L, 5000L);
+    Assert.assertEquals(4, values.length);
+    Assert.assertArrayEquals(rawValues, values);
+
+    Value[] expectedCountValues = new  Value[]{new Value(2000L,1), new Value(3200L,1), new Value(4500L,1) };
     values = client.range("seriesAdd", 1200L, 4600L, Aggregation.COUNT, 1);
     Assert.assertEquals(3, values.length);
+    Assert.assertArrayEquals(expectedCountValues, values);
 
-    values = client.range("seriesAdd", 500L, 4600L, Aggregation.STD_P, 2000L);
+    Value[] expectedAvgValues = new  Value[]{new Value(0L,1.1), new Value(2000L,1), new Value(4000L,-1.1) };
+    values = client.range("seriesAdd", 500L, 4600L, Aggregation.AVG, 2000L);
     Assert.assertEquals(3, values.length);
-    Assert.assertEquals(1.05, values[0].getValue(), 0.0000001);
-    Assert.assertEquals(0.0, values[1].getValue(), 0.0000001);
-    Assert.assertEquals(0.0, values[2].getValue(), 0.0000001);
+    Assert.assertArrayEquals(expectedAvgValues, values);
+
+    // ensure zero-based index
+    Value[] valuesZeroBased = client.range("seriesAdd", 0L, 4600L, Aggregation.AVG, 2000L);
+    Assert.assertEquals(3, valuesZeroBased.length);
+    Assert.assertArrayEquals(values,valuesZeroBased);
+
+    Value[] expectedOverallSumValues = new  Value[]{new Value(0L,2.0)};
+    values = client.range("seriesAdd", 0L, 5000L, Aggregation.SUM, 5000L);
+    Assert.assertEquals(1, values.length);
+    Assert.assertArrayEquals(expectedOverallSumValues, values);
+
+    Value[] expectedOverallMinValues = new  Value[]{new Value(0L,-1.1)};
+    values = client.range("seriesAdd", 0L, 5000L, Aggregation.MIN, 5000L);
+    Assert.assertEquals(1, values.length);
+    Assert.assertArrayEquals(expectedOverallMinValues, values);
+
+    Value[] expectedOverallMaxValues = new  Value[]{new Value(0L,1.1)};
+    values = client.range("seriesAdd", 0L, 5000L, Aggregation.MAX, 5000L);
+    Assert.assertEquals(1, values.length);
+    Assert.assertArrayEquals(expectedOverallMaxValues, values);
     
     try {
       client.mrange(500L, 4600L, Aggregation.COUNT, 1);
