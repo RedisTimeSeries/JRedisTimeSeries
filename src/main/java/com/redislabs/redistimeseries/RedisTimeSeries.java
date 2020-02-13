@@ -337,7 +337,6 @@ public class RedisTimeSeries {
    * @param timestamp
    * @param value
    * @param retentionTime
-   * @param uncompressed
    * @param labels
    * @return
    */
