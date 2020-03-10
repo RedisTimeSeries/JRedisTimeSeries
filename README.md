@@ -5,8 +5,12 @@
 [![Javadocs](https://www.javadoc.io/badge/com.redislabs/jredistimeseries.svg)](https://www.javadoc.io/doc/com.redislabs/jredistimeseries)
 [![Codecov](https://codecov.io/gh/RedisTimeSeries/JRedisTimeSeries/branch/master/graph/badge.svg)](https://codecov.io/gh/RedisTimeSeries/JRedisTimeSeries)
 [![Language grade: Java](https://img.shields.io/lgtm/grade/java/g/RedisTimeSeries/JRedisTimeSeries.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/RedisTimeSeries/JRedisTimeSeries/context:java)
+[![Known Vulnerabilities](https://snyk.io/test/github/RedisTimeSeries/JRedisTimeSeries/badge.svg?targetFile=pom.xml)](https://snyk.io/test/github/RedisTimeSeries/JRedisTimeSeries?targetFile=pom.xml)
 
 # JRedisTimeSeries
+[![Mailing List](https://img.shields.io/badge/Mailing%20List-RedisTimeSeries-blue)](https://groups.google.com/forum/#!forum/redistimeseries)
+[![Gitter](https://badges.gitter.im/RedisLabs/RedisTimeSeries.svg)](https://gitter.im/RedisLabs/RedisTimeSeries?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
+
 Java Client for RedisTimeSeries
 
 ### Official Releases
