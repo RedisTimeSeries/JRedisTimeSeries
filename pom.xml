@@ -11,7 +11,7 @@
 	<packaging>jar</packaging>
 	<groupId>com.redislabs</groupId>
 	<artifactId>jredistimeseries</artifactId>
-	<version>1.3.0</version>
+	<version>1.4.0-SNAPSHOT</version>
 	<name>JRedisTimeSeries</name>
 	<description>Java Client for RedisTimeSeries.</description>
 	<url>https://github.com/RedisTimeSeries/JRedisTimeSeries</url>
