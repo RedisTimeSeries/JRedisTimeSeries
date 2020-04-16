@@ -1,4 +1,4 @@
-package com.redislabs.sas.cachingpatterns;
+package com.redislabs.tsdb.demo;
 
 import java.util.HashMap;
 import java.util.Map;
