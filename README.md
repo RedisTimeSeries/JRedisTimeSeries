@@ -50,7 +50,7 @@ and
 
 
 # Example: Using the Java Client
-
+<a href="https://github.com/RedisTimeSeries/JRedisTimeSeries/examples/JRedisTimeSeriesTest.java">Complete Code</a>
 ```java
    RedisTimeSeries rts = new RedisTimeSeries("localhost", 6379);
    
