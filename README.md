@@ -8,7 +8,7 @@
 [![Known Vulnerabilities](https://snyk.io/test/github/RedisTimeSeries/JRedisTimeSeries/badge.svg?targetFile=pom.xml)](https://snyk.io/test/github/RedisTimeSeries/JRedisTimeSeries?targetFile=pom.xml)
 
 # JRedisTimeSeries
-[![Mailing List](https://img.shields.io/badge/Mailing%20List-RedisTimeSeries-blue)](https://groups.google.com/forum/#!forum/redistimeseries)
+[![Forum](https://img.shields.io/badge/Forum-RedisTimeSeries-blue)](https://forum.redislabs.com/c/modules/redistimeseries)
 [![Gitter](https://badges.gitter.im/RedisLabs/RedisTimeSeries.svg)](https://gitter.im/RedisLabs/RedisTimeSeries?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
 
 Java Client for RedisTimeSeries
