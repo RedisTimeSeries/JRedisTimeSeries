@@ -206,9 +206,9 @@ public class RedisTimeSeriesTest {
     Assert.assertEquals(labels3, ranges3[1].getLables());
 
     // Back filling 
-    client.add("seriesAdd", 800L, 1.1);
-    client.add("seriesAdd", 800L, 1.1, 10000);
-    client.add("seriesAdd", 800L, 1.1, 10000, null);
+    Assert.assertEquals(800L, client.add("seriesAdd", 800L, 1.1));
+    Assert.assertEquals(700L, client.add("seriesAdd", 700L, 1.1, 10000));
+    Assert.assertEquals(600L, client.add("seriesAdd", 600L, 1.1, 10000, null));
 
     // Range on none existing key 
     try {
