@@ -205,33 +205,16 @@ public class RedisTimeSeriesTest {
     Assert.assertEquals(2, ranges3[1].getValues().length);
     Assert.assertEquals(labels3, ranges3[1].getLables());
 
-    // Failure cases
-    try {
-      client.add("seriesAdd", 800L, 1.1);
-      Assert.fail();
-    } catch(JedisDataException e) {
-      // Error on creating same rule twice
-    }
-    
-    try {
-      client.add("seriesAdd", 800L, 1.1, 10000);
-      Assert.fail();
-    } catch(JedisDataException e) {
-      // Error on creating same rule twice
-    }
-    
-    try {
-      client.add("seriesAdd", 800L, 1.1, 10000, null);
-      Assert.fail();
-    } catch(JedisDataException e) {
-      // Error on creating same rule twice
-    }
+    // Back filling 
+    Assert.assertEquals(800L, client.add("seriesAdd", 800L, 1.1));
+    Assert.assertEquals(700L, client.add("seriesAdd", 700L, 1.1, 10000));
+    Assert.assertEquals(600L, client.add("seriesAdd", 600L, 1.1, 10000, null));
 
+    // Range on none existing key 
     try {
       client.range("seriesAdd1", 500L, 4000L, Aggregation.COUNT, 1);
       Assert.fail();
     } catch(JedisDataException e) {
-      // Error on creating same rule twice
     }
   }
   
@@ -314,15 +297,15 @@ public class RedisTimeSeriesTest {
   public void testIncDec() throws InterruptedException {
     Assert.assertTrue(client.create("seriesIncDec", 100*1000/*100sec retentionTime*/));   
     long startTime = System.currentTimeMillis();
-    Assert.assertEquals(startTime, client.add("seriesIncDec", -1, 1, 10000, null), 1.0);
+    Assert.assertEquals(startTime, client.add("seriesIncDec", -1, 1, 10000, null), 0);
         
     Thread.sleep(1);
     startTime = System.currentTimeMillis();
-    Assert.assertEquals(startTime, client.incrBy("seriesIncDec", 3, startTime), 2.0);
+    Assert.assertEquals(startTime, client.incrBy("seriesIncDec", 3, startTime), 0);
 
     Thread.sleep(1);
     startTime = System.currentTimeMillis();
-    Assert.assertEquals(startTime, client.decrBy("seriesIncDec", 2, startTime), 2.0);
+    Assert.assertEquals(startTime, client.decrBy("seriesIncDec", 2, startTime), 0);
     
     Value[] values = client.range("seriesIncDec", 1L, Long.MAX_VALUE);
     Assert.assertEquals(3, values.length);
@@ -330,15 +313,24 @@ public class RedisTimeSeriesTest {
     
     Thread.sleep(1);
     startTime = System.currentTimeMillis();
-    Assert.assertEquals(startTime, client.incrBy("seriesIncDec", 3), 2.0);
+    Assert.assertEquals(startTime, client.incrBy("seriesIncDec", 3), 0);
 
     Thread.sleep(1);
     startTime = System.currentTimeMillis();
-    Assert.assertEquals(startTime, client.decrBy("seriesIncDec", 2), 2.0);
+    Assert.assertEquals(startTime, client.decrBy("seriesIncDec", 2), 0);
     
+    Assert.assertEquals(startTime, client.decrBy("seriesIncDec", 2, startTime), 0);
+
     values = client.range("seriesIncDec", 1L, Long.MAX_VALUE);
     Assert.assertEquals(5, values.length);
-    Assert.assertEquals(3, values[4].getValue(), 0);
+    Assert.assertEquals(1, values[4].getValue(), 0);
+    
+    try {
+      client.incrBy("seriesIncDec", 3, startTime-1);
+      Assert.fail();
+    } catch(JedisDataException e) {
+      // Error on incrby in the past
+    }
   }
 
   @Test
@@ -462,7 +454,7 @@ public class RedisTimeSeriesTest {
       client.info("seriesInfo1");
       Assert.fail();
     } catch(JedisDataException e) {
-      // Error on creating same rule twice
+      // Error on info on none existing series
     }
   }
 }
