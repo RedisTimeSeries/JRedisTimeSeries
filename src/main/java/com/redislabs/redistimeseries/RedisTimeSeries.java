@@ -459,6 +459,35 @@ public class RedisTimeSeries {
   }
 
   /**
+   * TS.REVRANGE key fromTimestamp toTimestamp [COUNT count]
+   *
+   * @param key
+   * @param from
+   * @param to
+   * @param count
+   * @return
+   */
+  public Value[] revrange(String key, long from, long to, int count) {
+    return revrange(SafeEncoder.encode(key), Protocol.toByteArray(from), Protocol.toByteArray(to),
+        Keyword.COUNT.getRaw(), Protocol.toByteArray(count));
+  }
+
+  /**
+   * TS.REVRANGE key fromTimestamp toTimestamp [AGGREGATION aggregationType timeBucket]
+   *
+   * @param key
+   * @param from
+   * @param to
+   * @param aggregation
+   * @param timeBucket
+   * @return
+   */
+  public Value[] revrange(String key, long from, long to, Aggregation aggregation, long timeBucket) {
+    return revrange(SafeEncoder.encode(key), Protocol.toByteArray(from), Protocol.toByteArray(to),
+        Keyword.AGGREGATION.getRaw(), aggregation.getRaw(), Protocol.toByteArray(timeBucket));
+  }
+
+  /**
    * TS.RANGE key fromTimestamp toTimestamp [COUNT count]
    *
    * @param key
