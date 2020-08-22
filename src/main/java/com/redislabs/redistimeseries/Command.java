@@ -7,6 +7,7 @@ public enum Command implements ProtocolCommand{
 
     CREATE("TS.CREATE"),
     RANGE("TS.RANGE"),
+    REVRANGE("TS.REVRANGE"),
     MRANGE("TS.MRANGE"),
     CREATE_RULE("TS.CREATERULE"),
     DELETE_RULE("TS.DELETERULE"),
@@ -19,7 +20,7 @@ public enum Command implements ProtocolCommand{
     MGET("TS.MGET"),
     ALTER("TS.ALTER"),
     QUERYINDEX("TS.QUERYINDEX");
-    
+
     private final byte[] raw;
 
     Command(String alt) {
