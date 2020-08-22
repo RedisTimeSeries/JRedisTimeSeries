@@ -9,6 +9,7 @@ public enum Command implements ProtocolCommand{
     RANGE("TS.RANGE"),
     REVRANGE("TS.REVRANGE"),
     MRANGE("TS.MRANGE"),
+    MREVRANGE("TS.MREVRANGE"),
     CREATE_RULE("TS.CREATERULE"),
     DELETE_RULE("TS.DELETERULE"),
     ADD("TS.ADD"),

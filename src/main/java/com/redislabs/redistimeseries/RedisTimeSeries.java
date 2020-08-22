@@ -404,29 +404,22 @@ public class RedisTimeSeries {
   }
 
   private Value[] range(byte[]... args) {
-    try (Jedis conn = getConnection()) {
-      List<Object> range = sendCommand(conn, Command.RANGE, args)
-          .getObjectMultiBulkReply();
-
-      Value[] values = new Value[range.size()];
-
-      for(int i=0; i<values.length ; ++i) {
-        List<Object> touple = (List<Object>)range.get(i);
-        values[i] = new Value((Long)touple.get(0), Double.parseDouble(SafeEncoder.encode((byte[])touple.get(1))));
-      }
-      return values;
-    }
+    return rangeImpl(Command.RANGE, args);
   }
 
   private Value[] revrange(byte[]... args) {
+    return rangeImpl(Command.REVRANGE, args);
+  }
+
+  private Value[] rangeImpl(Command command, byte[]... args) {
     try (Jedis conn = getConnection()) {
-      List<Object> range = sendCommand(conn, Command.REVRANGE, args)
+      List<Object> range = sendCommand(conn, command, args)
           .getObjectMultiBulkReply();
 
       Value[] values = new Value[range.size()];
 
       for(int i=0; i<values.length ; ++i) {
-        List<Object> touple = (List<Object>)range.get(i);
+        @SuppressWarnings("unchecked") List<Object> touple = (List<Object>)range.get(i);
         values[i] = new Value((Long)touple.get(0), Double.parseDouble(SafeEncoder.encode((byte[])touple.get(1))));
       }
       return values;
@@ -485,6 +478,137 @@ public class RedisTimeSeries {
   public Value[] revrange(String key, long from, long to, Aggregation aggregation, long timeBucket) {
     return revrange(SafeEncoder.encode(key), Protocol.toByteArray(from), Protocol.toByteArray(to),
         Keyword.AGGREGATION.getRaw(), aggregation.getRaw(), Protocol.toByteArray(timeBucket));
+  }
+
+  /**
+   * TS.MREVRANGE fromTimestamp toTimestamp FILTER filter.
+   * </br>
+   * Similar to calling <code>mrevrange(from, to, null, 0, false, Integer.MAX_VALUE, filters)</code>
+   *
+   * @param from
+   * @param to
+   * @param filters
+   * @return
+   */
+  public Range[] mrevrange(long from, long to, String... filters) {
+    return mrevrange(from, to, null /*aggregation*/, 0 /*timeBucket*/, filters);
+  }
+
+  /**
+   * TS.MREVRANGE fromTimestamp toTimestamp [COUNT count] FILTER filter.
+   * </br>
+   * Similar to calling <code>mrevrange(from, to, null, 0, false, Integer.MAX_VALUE, filters)</code>
+   *
+   * @param from
+   * @param to
+   * @param count
+   * @param filters
+   * @return
+   */
+  public Range[] mrevrange(long from, long to, int count, String... filters) {
+    return mrevrange(from, to, null /*aggregation*/, 0 /*timeBucket*/, false /*withLabels*/, count, filters);
+  }
+
+  /**
+   * TS.MREVRANGE fromTimestamp toTimestamp [AGGREGATION aggregationType timeBucket] FILTER filter.
+   * </br>
+   * Similar to calling <code>mrevrange(from, to, aggregation, retentionTime, false, Integer.MAX_VALUE, filters)</code>
+   *
+   * @param from
+   * @param to
+   * @param aggregation
+   * @param timeBucket
+   * @param filters
+   * @return
+   */
+  public Range[] mrevrange(long from, long to, Aggregation aggregation, long timeBucket, String... filters) {
+    return mrevrange(from, to, aggregation, timeBucket, false /*withLabels*/, filters);
+  }
+
+  /**
+   * TS.MREVRANGE fromTimestamp toTimestamp [AGGREGATION aggregationType timeBucket] FILTER filter.
+   * </br>
+   * Similar to calling <code>mrevrange(from, to, aggregation, retentionTime, false, Integer.MAX_VALUE, filters)</code>
+   *
+   * @param from
+   * @param to
+   * @param aggregation
+   * @param timeBucket
+   * @param filters
+   * @return
+   */
+  public Range[] mrevrange(long from, long to, Aggregation aggregation, long timeBucket, boolean withLabels, String... filters) {
+    return mrevrange(from, to, aggregation, timeBucket, withLabels, Integer.MAX_VALUE /*count*/, filters);
+  }
+
+  /**
+   * TS.MREVRANGE fromTimestamp toTimestamp [COUNT count] [AGGREGATION aggregationType timeBucket] [WITHLABELS] FILTER filter..
+   *
+   * @param from
+   * @param to
+   * @param aggregation
+   * @param timeBucket
+   * @param withLabels <code>true</code> if the labels should be returned for each range
+   * @param count
+   * @param filters
+   * @return
+   */
+  public Range[] mrevrange(long from, long to, Aggregation aggregation, long timeBucket,
+      boolean withLabels, int count, String... filters) {
+    return mrangeImpl(Command.MREVRANGE, from, to, aggregation, timeBucket, withLabels, count, filters);
+  }
+
+  private Range[] mrangeImpl(Command command, long from, long to, Aggregation aggregation,
+      long timeBucket, boolean withLabels, int count, String... filters) {
+    try (Jedis conn = getConnection()) {
+
+      byte[][] args = new byte[3 + (filters==null?0:filters.length) + (aggregation==null?0:3) + (withLabels?1:0) + (count==Integer.MAX_VALUE?0:2)][];
+      int i=0;
+      args[i++] = Protocol.toByteArray(from);
+      args[i++] = Protocol.toByteArray(to);
+      if(aggregation!= null) {
+        args[i++] = Keyword.AGGREGATION.getRaw();
+        args[i++] = aggregation.getRaw();
+        args[i++] = Protocol.toByteArray(timeBucket);
+      }
+      if(withLabels) {
+        args[i++] = Keyword.WITHLABELS.getRaw();
+      }
+      if(count != Integer.MAX_VALUE) {
+        args[i++] = Keyword.COUNT.getRaw();
+        args[i++] = Protocol.toByteArray(count);
+      }
+
+      args[i++] = Keyword.FILTER.getRaw();
+      if(filters != null) {
+        for(String label : filters) {
+          args[i++] = SafeEncoder.encode(label);
+        }
+      }
+
+      List<?> result = sendCommand(conn, command, args).getObjectMultiBulkReply();
+      Range[] ranges = new Range[result.size()];
+      for(int j=0; j<ranges.length; ++j) {
+        List<?> series = (List<?>)result.get(j);
+        String resKey = SafeEncoder.encode((byte[])series.get(0));
+        List<?> resLables = (List<?>)series.get(1);
+        Map<String, String> rangeLabels = new HashMap<>();
+        for (Object resLable : resLables) {
+          List<byte[]> label = (List<byte[]>) resLable;
+          rangeLabels.put(SafeEncoder.encode(label.get(0)), SafeEncoder.encode(label.get(1)));
+        }
+
+        List<?> resRange = (List<?>)series.get(2);
+        Value[] values = new Value[resRange.size()];
+        for(int r=0; r<values.length ; ++r) {
+          List<?> touple = (List<?>)resRange.get(r);
+          values[r] = new Value((Long)touple.get(0), Double.parseDouble(SafeEncoder.encode((byte[])touple.get(1))));
+        }
+
+        ranges[j] = new Range(resKey, rangeLabels, values);
+      }
+      return ranges;
+    }
   }
 
   /**
@@ -607,58 +731,7 @@ public class RedisTimeSeries {
    * @return
    */
   public Range[] mrange(long from, long to, Aggregation aggregation, long timeBucket, boolean withLabels, int count, String... filters) {
-    try (Jedis conn = getConnection()) {
-
-      byte[][] args = new byte[3 + (filters==null?0:filters.length) + (aggregation==null?0:3) + (withLabels?1:0) + (count==Integer.MAX_VALUE?0:2)][];
-      int i=0;
-      args[i++] = Protocol.toByteArray(from);
-      args[i++] = Protocol.toByteArray(to);
-      if(aggregation!= null) {
-        args[i++] = Keyword.AGGREGATION.getRaw();
-        args[i++] = aggregation.getRaw();
-        args[i++] = Protocol.toByteArray(timeBucket);
-      }
-      if(withLabels) {
-        args[i++] = Keyword.WITHLABELS.getRaw();
-      }
-      if(count != Integer.MAX_VALUE) {
-        args[i++] = Keyword.COUNT.getRaw();
-        args[i++] = Protocol.toByteArray(count);
-      }
-
-      args[i++] = Keyword.FILTER.getRaw();
-      if(filters != null) {
-        for(String label : filters) {
-          args[i++] = SafeEncoder.encode(label);
-        }
-      }
-
-      List<?> result = sendCommand(conn, Command.MRANGE, args).getObjectMultiBulkReply();
-      Range[] ranges = new Range[result.size()];
-      for(int j=0; j<ranges.length; ++j) {
-        List<?> series = (List<?>)result.get(j);
-
-        String resKey = SafeEncoder.encode((byte[])series.get(0));
-
-
-        List<?> resLables = (List<?>)series.get(1);
-        Map<String, String> rangeLabels = new HashMap<>();
-        for(int l=0; l<resLables.size(); ++l) {
-          List<byte[]> label = (List<byte[]>)resLables.get(l);
-          rangeLabels.put( SafeEncoder.encode(label.get(0)), SafeEncoder.encode(label.get(1)));
-        }
-
-        List<?> resRange = (List<?>)series.get(2);
-        Value[] values = new Value[resRange.size()];
-        for(int r=0; r<values.length ; ++r) {
-          List<?> touple = (List<?>)resRange.get(r);
-          values[r] = new Value((Long)touple.get(0), Double.parseDouble(SafeEncoder.encode((byte[])touple.get(1))));
-        }
-
-        ranges[j] = new Range(resKey, rangeLabels, values);
-      }
-      return ranges;
-    }
+    return mrangeImpl(Command.MRANGE, from, to, aggregation, timeBucket, withLabels, count, filters);
   }
 
   /**
