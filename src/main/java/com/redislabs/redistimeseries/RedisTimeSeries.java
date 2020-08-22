@@ -591,10 +591,10 @@ public class RedisTimeSeries {
       for(int j=0; j<ranges.length; ++j) {
         List<?> series = (List<?>)result.get(j);
         String resKey = SafeEncoder.encode((byte[])series.get(0));
-        List<?> resLables = (List<?>)series.get(1);
+        List<?> resLabels = (List<?>)series.get(1);
         Map<String, String> rangeLabels = new HashMap<>();
-        for (Object resLable : resLables) {
-          List<byte[]> label = (List<byte[]>) resLable;
+        for (Object resLabel : resLabels) {
+          List<byte[]> label = (List<byte[]>) resLabel;
           rangeLabels.put(SafeEncoder.encode(label.get(0)), SafeEncoder.encode(label.get(1)));
         }
 
@@ -777,14 +777,12 @@ public class RedisTimeSeries {
       Range[] ranges = new Range[result.size()];
       for(int j=0; j<ranges.length; ++j) {
         List<?> series = (List<?>)result.get(j);
-
         String resKey = SafeEncoder.encode((byte[])series.get(0));
-
-        List<?> resLables = (List<?>)series.get(1);
+        List<?> resLabels = (List<?>)series.get(1);
         Map<String, String> rangeLabels = new HashMap<>();
-        for(int l=0; l<resLables.size(); ++l) {
-          List<byte[]> label = (List<byte[]>)resLables.get(l);
-          rangeLabels.put( SafeEncoder.encode(label.get(0)), SafeEncoder.encode(label.get(1)));
+        for (Object resLabel : resLabels) {
+          List<byte[]> label = (List<byte[]>) resLabel;
+          rangeLabels.put(SafeEncoder.encode(label.get(0)), SafeEncoder.encode(label.get(1)));
         }
 
         List<?> touple = (List<?>)series.get(2);
