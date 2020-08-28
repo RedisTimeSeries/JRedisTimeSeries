@@ -1,17 +1,15 @@
 package com.redislabs.redistimeseries;
 
-import java.util.*;
-
+import com.redislabs.redistimeseries.information.Info;
+import com.redislabs.redistimeseries.information.Rule;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-
-import com.redislabs.redistimeseries.information.Info;
-import com.redislabs.redistimeseries.information.Rule;
-
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
 import redis.clients.jedis.exceptions.JedisDataException;
+
+import java.util.*;
 
 public class RedisTimeSeriesTest {
 
@@ -224,10 +222,10 @@ public class RedisTimeSeriesTest {
     Assert.assertEquals(1234, v.getTime());
     Assert.assertEquals(234.89634, v.getValue(), 0);
 
-    Assert.assertTrue(v.equals(new Value(1234, 234.89634)));
-    Assert.assertFalse(v.equals(new Value(1334, 234.89634)));
-    Assert.assertFalse(v.equals(new Value(1234, 234.8934)));
-    Assert.assertFalse(v.equals(1234));
+    Assert.assertEquals(v, new Value(1234, 234.89634));
+    Assert.assertNotEquals(v, new Value(1334, 234.89634));
+    Assert.assertNotEquals(v, new Value(1234, 234.8934));
+    Assert.assertNotEquals(1234, v.getValue());
 
     Assert.assertEquals("(1234:234.89634)", v.toString());
     Assert.assertEquals(-1856758940, v.hashCode());
@@ -334,7 +332,7 @@ public class RedisTimeSeriesTest {
   }
 
   @Test
-  public void testGet(){
+  public void testGet() {
 
     // Test for empty result none existing series
     try {
@@ -356,7 +354,7 @@ public class RedisTimeSeriesTest {
   }
 
   @Test
-  public void testMGet(){
+  public void testMGet() {
     Map<String, String> labels = new HashMap<>();
     labels.put("l1", "v1");
     labels.put("l2", "v2");
@@ -386,7 +384,7 @@ public class RedisTimeSeriesTest {
   }
 
   @Test
-  public void testAlter(){
+  public void testAlter() {
 
     Map<String, String> labels = new HashMap<>();
     labels.put("l1", "v1");
@@ -409,12 +407,12 @@ public class RedisTimeSeriesTest {
     Info info = client.info("seriesAlter");
     Assert.assertEquals( (Long)324L, info.getProperty("retentionTime"));
     Assert.assertEquals( "v11", info.getLabel("l1"));
-    Assert.assertEquals( null, info.getLabel("l2"));
+    Assert.assertNull(info.getLabel("l2"));
     Assert.assertEquals( "v33", info.getLabel("l3"));
   }
 
   @Test
-  public void testQueryIndex(){
+  public void testQueryIndex() {
 
     Map<String, String> labels = new HashMap<>();
     labels.put("l1", "v1");
@@ -430,7 +428,6 @@ public class RedisTimeSeriesTest {
     Assert.assertArrayEquals( new String[]{"seriesQueryIndex2"}, client.queryIndex("l2=v22"));
   }
 
-
   @Test
   public void testInfo() {
     Map<String, String> labels = new HashMap<>();
@@ -444,7 +441,7 @@ public class RedisTimeSeriesTest {
     Assert.assertEquals( (Long)10000L, info.getProperty("retentionTime"));
     Assert.assertEquals( "v1", info.getLabel("l1"));
     Assert.assertEquals( "v2", info.getLabel("l2"));
-    Assert.assertEquals( null, info.getLabel("l3"));
+    Assert.assertNull(info.getLabel("l3"));
 
     Rule rule = info.getRule("dest");
     Assert.assertEquals( "dest", rule.getTarget());
@@ -456,5 +453,47 @@ public class RedisTimeSeriesTest {
     } catch(JedisDataException e) {
       // Error on info on none existing series
     }
+  }
+
+  @Test
+  public void testRevRange() {
+    Map<String, String> labels = new HashMap<>();
+    labels.put("l1", "v1");
+    labels.put("l2", "v2");
+    Assert.assertTrue(client.create("seriesAdd", 10000L/*retentionTime*/, labels));
+
+    Assert.assertEquals(1000L, client.add("seriesAdd", 1000L, 1.1, 10000, null));
+    Assert.assertEquals(2000L, client.add("seriesAdd", 2000L, 0.9, null));
+    Assert.assertEquals(3200L, client.add("seriesAdd", 3200L, 1.1, 10000));
+    Assert.assertEquals(4500L, client.add("seriesAdd", 4500L, -1.1));
+
+    Value[] rawValues =
+        new Value[]{new Value(1000L, 1.1), new Value(2000L, 0.9), new Value(3200L, 1.1),
+            new Value(4500L, -1.1)};
+    Value[] values = client.revrange("seriesAdd", 800L, 3000L);
+    Assert.assertEquals(2, values.length);
+    Value[] range = Arrays.copyOfRange(rawValues, 0, 2);
+    Assert.assertArrayEquals(values, reverse(range));
+    values = client.range("seriesAdd", 800L, 5000L);
+    Assert.assertEquals(4, values.length);
+    Assert.assertArrayEquals(rawValues, values);
+
+    Value[] expectedCountValues =
+        new Value[]{new Value(2000L, 1), new Value(3200L, 1), new Value(4500L, 1)};
+    values = client.revrange("seriesAdd", 1200L, 4600L, Aggregation.COUNT, 1);
+    Assert.assertEquals(3, values.length);
+    Assert.assertArrayEquals(expectedCountValues, reverse(values));
+
+    Value[] expectedAvgValues =
+        new Value[]{new Value(0L, 1.1), new Value(2000L, 1), new Value(4000L, -1.1)};
+    values = client.revrange("seriesAdd", 500L, 4600L, Aggregation.AVG, 2000L);
+    Assert.assertEquals(3, values.length);
+    Assert.assertArrayEquals(expectedAvgValues, reverse(values));
+  }
+
+  private static <T> T[] reverse(T[] array) {
+    Collections.reverse(Arrays.asList(array));
+    //noinspection unchecked
+    return (T[]) Arrays.stream(array).toArray();
   }
 }
