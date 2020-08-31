@@ -704,7 +704,7 @@ public class RedisTimeSeries {
       }
 
       List<?> result = sendCommand(conn, Command.MGET, args).getObjectMultiBulkReply();
-      return Range.parseRanges(result);
+      return Range.parseMget(result);
     }
   }
 

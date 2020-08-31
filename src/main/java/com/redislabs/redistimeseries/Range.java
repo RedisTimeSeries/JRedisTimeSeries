@@ -34,8 +34,8 @@ public class Range {
     Value[] values = new Value[range.size()];
 
     for(int i=0; i<values.length ; ++i) {
-      @SuppressWarnings("unchecked") List<Object> touple = (List<Object>)range.get(i);
-      values[i] = new Value((Long)touple.get(0), Double.parseDouble(SafeEncoder.encode((byte[])touple.get(1))));
+      @SuppressWarnings("unchecked") List<Object> tuple = (List<Object>)range.get(i);
+      values[i] = Value.parseValue(tuple);
     }
     return values;
   }
@@ -52,6 +52,32 @@ public class Range {
         rangeLabels.put(SafeEncoder.encode(label.get(0)), SafeEncoder.encode(label.get(1)));
       }
       Value[] values = parseRange((List<Object>) series.get(2));
+      ranges[j] = new Range(resKey, rangeLabels, values);
+    }
+    return ranges;
+  }
+
+  protected static Range[] parseMget(List<?> result) {
+    Range[] ranges = new Range[result.size()];
+    for(int j=0; j<ranges.length; ++j) {
+      List<?> series = (List<?>)result.get(j);
+      String resKey = SafeEncoder.encode((byte[])series.get(0));
+      List<?> resLabels = (List<?>)series.get(1);
+      Map<String, String> rangeLabels = new HashMap<>();
+      for (Object resLabel : resLabels) {
+        List<byte[]> label = (List<byte[]>) resLabel;
+        rangeLabels.put(SafeEncoder.encode(label.get(0)), SafeEncoder.encode(label.get(1)));
+      }
+
+      List<?> tuple = (List<?>)series.get(2);
+      Value[] values;
+      if(tuple.isEmpty()) {
+        values = new Value[0];
+      } else {
+        values = new Value[1];
+        values[0] = Value.parseValue((List<Object>) tuple);
+      }
+
       ranges[j] = new Range(resKey, rangeLabels, values);
     }
     return ranges;

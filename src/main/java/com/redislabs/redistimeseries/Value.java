@@ -1,5 +1,9 @@
 package com.redislabs.redistimeseries;
 
+import redis.clients.jedis.util.SafeEncoder;
+
+import java.util.List;
+
 public class Value {
 
   private final long time;
@@ -34,5 +38,9 @@ public class Value {
   @Override
   public String toString() {
     return "(" + this.time + ":" + this.val + ")";
+  }
+
+  protected static Value parseValue(List<Object> tuple) {
+    return new Value((Long)tuple.get(0), Double.parseDouble(SafeEncoder.encode((byte[])tuple.get(1))));
   }
 }

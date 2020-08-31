@@ -303,43 +303,19 @@ public class RedisTimeSeriesTest {
   }
 
   @Test
-  public void testIncDec() throws InterruptedException {
+  public void testIncrByDecrBy() throws InterruptedException {
     Assert.assertTrue(client.create("seriesIncDec", 100*1000/*100sec retentionTime*/));
-    long startTime = System.currentTimeMillis();
-    Assert.assertEquals(startTime, client.add("seriesIncDec", -1, 1, 10000, null), 0);
-
-    Thread.sleep(1);
-    startTime = System.currentTimeMillis();
-    Assert.assertEquals(startTime, client.incrBy("seriesIncDec", 3, startTime), 0);
-
-    Thread.sleep(1);
-    startTime = System.currentTimeMillis();
-    Assert.assertEquals(startTime, client.decrBy("seriesIncDec", 2, startTime), 0);
-
-    Value[] values = client.range("seriesIncDec", 1L, Long.MAX_VALUE);
+    Assert.assertEquals(1L, client.add("seriesIncDec", 1L, 1, 10000, null), 0);
+    Assert.assertEquals(2L, client.incrBy("seriesIncDec", 3, 2L), 0);
+    Assert.assertEquals(3L, client.decrBy("seriesIncDec", 2, 3L), 0);
+    Value[] values = client.range("seriesIncDec", 1L, 3L);
     Assert.assertEquals(3, values.length);
     Assert.assertEquals(2, values[2].getValue(), 0);
-
-    Thread.sleep(1);
-    startTime = System.currentTimeMillis();
-    Assert.assertEquals(startTime, client.incrBy("seriesIncDec", 3), 0);
-
-    Thread.sleep(1);
-    startTime = System.currentTimeMillis();
-    Assert.assertEquals(startTime, client.decrBy("seriesIncDec", 2), 0);
+    Assert.assertEquals(3L, client.decrBy("seriesIncDec", 2,3L), 0);
     values = client.range("seriesIncDec", 1L, Long.MAX_VALUE);
-    Assert.assertEquals(5, values.length);
-    Assert.assertEquals(3.0, values[4].getValue(), 0);
-    
-    if(moduleVersion>=10400) {
-      Assert.assertEquals(startTime, client.decrBy("seriesIncDec", 2, startTime), 0);
-      values = client.range("seriesIncDec", 1L, Long.MAX_VALUE);
-      Assert.assertEquals(5, values.length);
-      Assert.assertEquals(1, values[4].getValue(), 0);
-    }
-    
+    Assert.assertEquals(3, values.length);
     try {
-      client.incrBy("seriesIncDec", 3, startTime-1);
+      client.incrBy("seriesIncDec", 3, 1L);
       Assert.fail();
     } catch(JedisDataException e) {
       // Error on incrby in the past
