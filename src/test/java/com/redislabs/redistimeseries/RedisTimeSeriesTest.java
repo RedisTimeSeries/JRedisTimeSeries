@@ -205,7 +205,7 @@ public class RedisTimeSeriesTest {
     Assert.assertEquals(1000L, client.add("seriesAdd3", 1000L, 1.1, labels3));
     Assert.assertEquals(2000L, client.add("seriesAdd3", 2000L, 1.1, labels3));
     Assert.assertEquals(3000L, client.add("seriesAdd3", 3000L, 1.1, labels3));
-    Range[] ranges3 = client.mrange(500L, 4600L, Aggregation.AVG, 1, true, 2, "l4=v4");
+    Range[] ranges3 = client.mrange(500L, 4600L, Aggregation.AVG, 1L, true, 2, "l4=v4");
     Assert.assertEquals(2, ranges3.length);
     Assert.assertEquals(1, ranges3[0].getValues().length);
     Assert.assertEquals(labels2, ranges3[0].getLabels());
@@ -521,7 +521,7 @@ public class RedisTimeSeriesTest {
     Assert.assertEquals(2222L, client.add("seriesMRevRange1", 2222L, 3.1, 10000, labels1));
     Range[] ranges1 = client.mrevrange(500L, 4600L, Aggregation.COUNT, 1, true, "l4=v4");
     Assert.assertEquals(1, ranges1.length);
-    Assert.assertEquals(labels1, ranges1[0].getLables());
+    Assert.assertEquals(labels1, ranges1[0].getLabels());
     Assert.assertArrayEquals(new Value[]{new Value(2222L, 1.0), new Value(1000L, 1.0)}, ranges1[0].getValues());
     
     Map<String, String> labels2 = new HashMap<>();
@@ -531,9 +531,9 @@ public class RedisTimeSeriesTest {
     Assert.assertEquals(1111L, client.add("seriesMRevRange2", 1111L, 99.99, 10000, labels2));
     Range[] ranges2 = client.mrevrange(500L, 4600L, "l3=v3");
     Assert.assertEquals(2, ranges2.length);
-    Assert.assertEquals(new HashMap<String, String>(), ranges2[0].getLables());
+    Assert.assertEquals(new HashMap<String, String>(), ranges2[0].getLabels());
     Assert.assertArrayEquals(new Value[]{new Value(2222L, 3.1), new Value(1000L, 1.1)}, ranges2[0].getValues());
-    Assert.assertEquals(new HashMap<String, String>(), ranges2[0].getLables());
+    Assert.assertEquals(new HashMap<String, String>(), ranges2[0].getLabels());
     Assert.assertArrayEquals(new Value[]{new Value(1111L, 99.99), new Value(1000L, 8.88)}, ranges2[1].getValues());
     
     Map<String, String> labels3 = new HashMap<>();
@@ -544,9 +544,9 @@ public class RedisTimeSeriesTest {
     Assert.assertEquals(3300L, client.add("seriesMRevRange3", 3300L, -33, labels3));
     Range[] ranges3 = client.mrevrange(500L, 4600L, Aggregation.AVG, 500, true, 5, "l4=v4");
     Assert.assertEquals(2, ranges3.length);
-    Assert.assertEquals(labels1, ranges3[0].getLables());
+    Assert.assertEquals(labels1, ranges3[0].getLabels());
     Assert.assertArrayEquals(new Value[]{new Value(2000L, 3.1), new Value(1000L, 1.1)}, ranges3[0].getValues());
-    Assert.assertEquals(labels3, ranges3[1].getLables());
+    Assert.assertEquals(labels3, ranges3[1].getLabels());
     Assert.assertArrayEquals(new Value[]{new Value(3000L, -33.0), new Value(2000L, 0.0)}, ranges3[1].getValues());
   }
 }
