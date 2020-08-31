@@ -311,15 +311,20 @@ public class RedisTimeSeriesTest {
     Value[] values = client.range("seriesIncDec", 1L, 3L);
     Assert.assertEquals(3, values.length);
     Assert.assertEquals(2, values[2].getValue(), 0);
-    Assert.assertEquals(3L, client.decrBy("seriesIncDec", 2,3L), 0);
-    values = client.range("seriesIncDec", 1L, Long.MAX_VALUE);
-    Assert.assertEquals(3, values.length);
-    try {
-      client.incrBy("seriesIncDec", 3, 1L);
-      Assert.fail();
-    } catch(JedisDataException e) {
-      // Error on incrby in the past
+    if(moduleVersion>=10400) {
+      Assert.assertEquals(3L, client.decrBy("seriesIncDec", 2,3L), 0);
+      values = client.range("seriesIncDec", 1L, Long.MAX_VALUE);
+      Assert.assertEquals(3, values.length);
+    } else {
+      try {
+        client.incrBy("seriesIncDec", 3, 0L);
+        Assert.fail();
+      } catch(JedisDataException e) {
+        // Error on incrby in the past
+      }
     }
+
+
   }
 
   @Test
