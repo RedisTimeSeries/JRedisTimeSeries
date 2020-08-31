@@ -14,9 +14,6 @@ import redis.clients.jedis.Protocol;
 import redis.clients.jedis.util.Pool;
 import redis.clients.jedis.util.SafeEncoder;
 
-import static com.redislabs.redistimeseries.Range.multiRangeArgs;
-import static com.redislabs.redistimeseries.Range.parseRanges;
-
 
 public class RedisTimeSeries {
 
@@ -131,12 +128,14 @@ public class RedisTimeSeries {
   }
 
   private static byte[][] tsCreateArgs(String key, long retentionTime, boolean uncompressed, Map<String, String> labels) {
-    byte[][] args = new byte[3 + (labels==null ? 0 : 2*labels.size()+1) + (uncompressed?1:0)][];
+    byte[][] args = new byte[1 + (labels==null ? 0 : 2*labels.size()+1) + (retentionTime>=0 ? 2 : 0 ) + (uncompressed?1:0)][];
     int i=0;
 
     args[i++] = SafeEncoder.encode(key);
-    args[i++] = Keyword.RETENTION.getRaw();
-    args[i++] = Protocol.toByteArray(retentionTime);
+    if(retentionTime>=0) {
+      args[i++] = Keyword.RETENTION.getRaw();
+      args[i++] = Protocol.toByteArray(retentionTime);
+    }
     if(uncompressed) {
       args[i++] = Keyword.UNCOMPRESSED.getRaw();
     }
@@ -176,7 +175,7 @@ public class RedisTimeSeries {
   }
 
   private static byte[][] tsAlterArgs(String key, long retentionTime, Map<String, String> labels) {
-    byte[][] args = new byte[3 + (labels==null ? 0 : 2*labels.size()+1)][];
+    byte[][] args = new byte[1 + (retentionTime>=0 ? 2 : 0 ) + (labels==null ? 0 : 2*labels.size()+1)][];
     int i=0;
     args[i++] = SafeEncoder.encode(key);
     if (retentionTime>=0){
@@ -317,7 +316,7 @@ public class RedisTimeSeries {
   }
 
   private static byte[][] tsAddArgs(String sourceKey, long timestamp, double value, long retentionTime, boolean uncompressed, Map<String, String> labels) {
-    byte[][] args = new byte[5 + (labels==null ? 0 : 2*labels.size()+1) + (uncompressed?1:0)][];
+    byte[][] args = new byte[3 + (retentionTime>=0 ? 2 : 0 ) + (labels==null ? 0 : 2*labels.size()+1) + (uncompressed?1:0)][];
     int i=0;
 
     args[i++] = SafeEncoder.encode(sourceKey);
@@ -371,7 +370,7 @@ public class RedisTimeSeries {
       List<Object> range = sendCommand(conn, command, args)
           .getObjectMultiBulkReply();
 
-      return parseRange(range);
+      return Range.parseRange(range);
     }
   }
 
@@ -581,9 +580,9 @@ public class RedisTimeSeries {
    */
   private Range[] mrange(Command command, long from, long to, Aggregation aggregation, long timeBucket, boolean withLabels, int count, String... filters) {
     try (Jedis conn = getConnection()) {
-      byte[][] args = multiRangeArgs(from, to, aggregation, timeBucket, withLabels, count, filters);
+      byte[][] args = Range.multiRangeArgs(from, to, aggregation, timeBucket, withLabels, count, filters);
       List<?> result = sendCommand(conn, command, args).getObjectMultiBulkReply();
-      return parseRanges(result);
+      return Range.parseRanges(result);
     }
   }
 
@@ -705,7 +704,7 @@ public class RedisTimeSeries {
       }
 
       List<?> result = sendCommand(conn, Command.MGET, args).getObjectMultiBulkReply();
-      return parseRanges(result);
+      return Range.parseRanges(result);
     }
   }
 
