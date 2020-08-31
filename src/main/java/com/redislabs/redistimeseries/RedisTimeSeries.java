@@ -1,12 +1,10 @@
 package com.redislabs.redistimeseries;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
 import com.redislabs.redistimeseries.information.Info;
-import com.redislabs.redistimeseries.information.Rule;
 
 import redis.clients.jedis.BinaryClient;
 import redis.clients.jedis.Jedis;
@@ -16,7 +14,9 @@ import redis.clients.jedis.Protocol;
 import redis.clients.jedis.util.Pool;
 import redis.clients.jedis.util.SafeEncoder;
 
-import static com.redislabs.redistimeseries.Range.*;
+import static com.redislabs.redistimeseries.Range.multiRangeArgs;
+import static com.redislabs.redistimeseries.Range.parseRanges;
+
 
 public class RedisTimeSeries {
 
