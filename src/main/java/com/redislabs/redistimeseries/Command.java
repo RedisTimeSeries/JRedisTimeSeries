@@ -21,7 +21,7 @@ public enum Command implements ProtocolCommand{
     MGET("TS.MGET"),
     ALTER("TS.ALTER"),
     QUERYINDEX("TS.QUERYINDEX");
-    
+
     private final byte[] raw;
 
     Command(String alt) {
