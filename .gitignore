@@ -29,4 +29,8 @@ hs_err_pid*
 .project
 .settings/
 
+.DS_Store
 
+# IntelliJ
+.idea/
+*.iml

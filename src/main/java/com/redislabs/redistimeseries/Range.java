@@ -4,12 +4,12 @@ import java.util.Map;
 
 public class Range {
   private final String key;
-  private final Map<String, String> lables;
+  private final Map<String, String> labels;
   private final Value[] values;
-  
+
   public Range(String key, Map<String, String> labels, Value[] values) {
     this.key = key;
-    this.lables = labels;
+    this.labels = labels;
     this.values = values;
   }
 
@@ -17,12 +17,11 @@ public class Range {
     return key;
   }
 
-  public Map<String, String> getLables() {
-    return lables;
+  public Map<String, String> getLabels() {
+    return labels;
   }
 
   public Value[] getValues() {
     return values;
   }
-
 }
