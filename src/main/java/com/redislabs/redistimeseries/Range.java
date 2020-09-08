@@ -83,11 +83,19 @@ public class Range {
     return ranges;
   }
 
-  protected static byte[][] multiRangeArgs(long from, long to, Aggregation aggregation, long timeBucket, boolean withLabels, int count, String[] filters) {
-    byte[][] args = new byte[3 + (filters==null?0:filters.length) + (aggregation==null?0:3) + (withLabels?1:0) + (count==Integer.MAX_VALUE?0:2)][];
+  protected static byte[][] multiRangeArgs(Long from, Long to, Aggregation aggregation, long timeBucket, boolean withLabels, Integer count, String[] filters) {
+    byte[][] args = new byte[2 + (filters==null?0:1+filters.length) + (aggregation==null?0:3) + (withLabels?1:0) + (count==null?0:2)][];
     int i=0;
-    args[i++] = Protocol.toByteArray(from);
-    args[i++] = Protocol.toByteArray(to);
+    if(from!=null){
+      args[i++] = Protocol.toByteArray(from);
+    } else {
+      args[i++] = SafeEncoder.encode("-");
+    }
+    if(from!=null){
+      args[i++] = Protocol.toByteArray(to);
+    } else {
+      args[i++] = SafeEncoder.encode("+");
+    }
     if(aggregation!= null) {
       args[i++] = Keyword.AGGREGATION.getRaw();
       args[i++] = aggregation.getRaw();
@@ -96,9 +104,9 @@ public class Range {
     if(withLabels) {
       args[i++] = Keyword.WITHLABELS.getRaw();
     }
-    if(count != Integer.MAX_VALUE) {
+    if(count!=null) {
       args[i++] = Keyword.COUNT.getRaw();
-      args[i++] = Protocol.toByteArray(count);
+      args[i++] = Protocol.toByteArray(count.intValue());
     }
 
     if(filters != null) {

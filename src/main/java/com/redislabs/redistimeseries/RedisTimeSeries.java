@@ -516,7 +516,7 @@ public class RedisTimeSeries {
   /**
    * TS.MRANGE fromTimestamp toTimestamp FILTER filter.
    * </br>
-   * Similar to calling <code>mrange(from, to, null, 0, false, Integer.MAX_VALUE, filters)</code>
+   * Similar to calling <code>mrange(from, to, null, 0, false, null, filters)</code>
    *
    * @param from
    * @param to
@@ -524,13 +524,13 @@ public class RedisTimeSeries {
    * @return
    */
   public Range[] mrange(long from, long to, String... filters) {
-    return mrange(Command.MRANGE,from, to, null /*aggregation*/, 0 /*timeBucket*/, false /*withLabels*/, Integer.MAX_VALUE /*count*/, filters);
+    return multiRange(Command.MRANGE,from, to, null /*aggregation*/, 0 /*timeBucket*/, false /*withLabels*/, null, filters);
   }
 
   /**
    * TS.MRANGE fromTimestamp toTimestamp [COUNT count] FILTER filter.
    * </br>
-   * Similar to calling <code>mrange(from, to, null, 0, false, Integer.MAX_VALUE, filters)</code>
+   * Similar to calling <code>mrange(from, to, null, 0, false, null, filters)</code>
    *
    * @param from
    * @param to
@@ -539,13 +539,13 @@ public class RedisTimeSeries {
    * @return
    */
   public Range[] mrange(long from, long to, int count, String... filters) {
-    return mrange(Command.MRANGE,from, to, null /*aggregation*/, 0 /*timeBucket*/, false /*withLabels*/, count, filters);
+    return multiRange(Command.MRANGE,from, to, null /*aggregation*/, 0 /*timeBucket*/, false /*withLabels*/, count, filters);
   }
 
   /**
    * TS.MRANGE fromTimestamp toTimestamp [AGGREGATION aggregationType timeBucket] FILTER filter.
    * </br>
-   * Similar to calling <code>mrange(from, to, aggregation, retentionTime, false, Integer.MAX_VALUE, filters)</code>
+   * Similar to calling <code>mrange(from, to, aggregation, retentionTime, false, null, filters)</code>
    *
    * @param from
    * @param to
@@ -555,13 +555,13 @@ public class RedisTimeSeries {
    * @return
    */
   public Range[] mrange(long from, long to, Aggregation aggregation, long timeBucket, String... filters) {
-    return mrange(Command.MRANGE, from, to, aggregation, timeBucket, false, Integer.MAX_VALUE /*count*/, filters);
+    return multiRange(Command.MRANGE, from, to, aggregation, timeBucket, false, null, filters);
   }
 
   /**
    * TS.MRANGE fromTimestamp toTimestamp [AGGREGATION aggregationType timeBucket] FILTER filter.
    * </br>
-   * Similar to calling <code>mrange(from, to, aggregation, retentionTime, false, Integer.MAX_VALUE, filters)</code>
+   * Similar to calling <code>mrange(from, to, aggregation, retentionTime, false, null, filters)</code>
    *
    * @param from
    * @param to
@@ -571,13 +571,13 @@ public class RedisTimeSeries {
    * @return
    */
   public Range[] mrange(long from, long to, Aggregation aggregation, long timeBucket, boolean withLabels, String... filters) {
-    return mrange(Command.MRANGE, from, to, aggregation, timeBucket, withLabels, Integer.MAX_VALUE /*count*/, filters);
+    return multiRange(Command.MRANGE, from, to, aggregation, timeBucket, withLabels, null, filters);
   }
 
   /**
    * TS.MRANGE fromTimestamp toTimestamp [COUNT count] [AGGREGATION aggregationType timeBucket] FILTER filter.
    * </br>
-   * Similar to calling <code>mrange(from, to, aggregation, retentionTime, false, Integer.MAX_VALUE, filters)</code>
+   * Similar to calling <code>mrange(from, to, aggregation, retentionTime, false, null, filters)</code>
    *
    * @param from
    * @param to
@@ -588,7 +588,7 @@ public class RedisTimeSeries {
    * @return
    */
   public Range[] mrange(long from, long to, Aggregation aggregation, long timeBucket, boolean withLabels, int count, String... filters) {
-    return mrange(Command.MRANGE, from, to, aggregation, timeBucket, withLabels, count, filters);
+    return multiRange(Command.MRANGE, from, to, aggregation, timeBucket, withLabels, count, filters);
   }
 
   /**
@@ -604,7 +604,7 @@ public class RedisTimeSeries {
    * @param filters
    * @return
    */
-  private Range[] mrange(Command command, long from, long to, Aggregation aggregation, long timeBucket, boolean withLabels, int count, String... filters) {
+  private Range[] multiRange(Command command, long from, long to, Aggregation aggregation, long timeBucket, boolean withLabels, Integer count, String... filters) {
     try (Jedis conn = getConnection()) {
       byte[][] args = Range.multiRangeArgs(from, to, aggregation, timeBucket, withLabels, count, filters);
       List<?> result = sendCommand(conn, command, args).getObjectMultiBulkReply();
@@ -615,7 +615,7 @@ public class RedisTimeSeries {
   /**
    * TS.MREVRANGE fromTimestamp toTimestamp FILTER filter.
    * </br>
-   * Similar to calling <code>mrevrange(from, to, null, 0, false, Integer.MAX_VALUE, filters)</code>
+   * Similar to calling <code>mrevrange(from, to, null, 0, false, null, filters)</code>
    * 
    * @param from
    * @param to
@@ -629,7 +629,7 @@ public class RedisTimeSeries {
   /**
    * TS.MREVRANGE fromTimestamp toTimestamp [COUNT count] FILTER filter.
    * </br>
-   * Similar to calling <code>mrevrange(from, to, null, 0, false, Integer.MAX_VALUE, filters)</code>
+   * Similar to calling <code>mrevrange(from, to, null, 0, false, null, filters)</code>
    * 
    * @param from
    * @param to
@@ -644,7 +644,7 @@ public class RedisTimeSeries {
   /**
    * TS.MREVRANGE fromTimestamp toTimestamp [AGGREGATION aggregationType timeBucket] FILTER filter.
    * </br>
-   * Similar to calling <code>mrevrange(from, to, aggregation, retentionTime, false, Integer.MAX_VALUE, filters)</code>
+   * Similar to calling <code>mrevrange(from, to, aggregation, retentionTime, false, null, filters)</code>
    * 
    * @param from
    * @param to
@@ -660,7 +660,7 @@ public class RedisTimeSeries {
   /**
    * TS.MREVRANGE fromTimestamp toTimestamp [AGGREGATION aggregationType timeBucket] FILTER filter.
    * </br>
-   * Similar to calling <code>mrevrange(from, to, aggregation, retentionTime, false, Integer.MAX_VALUE, filters)</code>
+   * Similar to calling <code>mrevrange(from, to, aggregation, retentionTime, false, null, filters)</code>
    * 
    * @param from
    * @param to
@@ -670,7 +670,7 @@ public class RedisTimeSeries {
    * @return
    */
   public Range[] mrevrange(long from, long to, Aggregation aggregation, long timeBucket, boolean withLabels, String... filters) {
-    return mrevrange(from, to, aggregation, timeBucket, withLabels, Integer.MAX_VALUE /*count*/, filters);
+    return multiRange(Command.MREVRANGE,from, to, aggregation, timeBucket, withLabels, null, filters);
   }
 
   /**
@@ -686,7 +686,7 @@ public class RedisTimeSeries {
    * @return
    */
   public Range[] mrevrange(long from, long to, Aggregation aggregation, long timeBucket, boolean withLabels, int count, String... filters) {
-    return mrange(Command.MREVRANGE, from, to, aggregation, timeBucket, withLabels, count, filters);
+    return multiRange(Command.MREVRANGE, from, to, aggregation, timeBucket, withLabels, count, filters);
   }
   
 
