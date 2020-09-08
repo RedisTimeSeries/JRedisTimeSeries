@@ -72,7 +72,10 @@ public class RedisTimeSeries {
    * @return
    */
   public boolean create(String key){
-    return create(key, -1, false, null);
+    try (Jedis conn = getConnection()) {
+      byte[][] args = tsCreateArgs(key, null, false, null);
+      return sendCommand(conn, Command.CREATE, args).getStatusCodeReply().equals("OK");
+    }
   }
 
 
@@ -95,7 +98,10 @@ public class RedisTimeSeries {
    * @return
    */
   public boolean create(String key, Map<String, String> labels){
-    return create(key, -1, false, labels);
+    try (Jedis conn = getConnection()) {
+      byte[][] args = tsCreateArgs(key, null, false, labels);
+      return sendCommand(conn, Command.CREATE, args).getStatusCodeReply().equals("OK");
+    }
   }
 
 
@@ -127,14 +133,14 @@ public class RedisTimeSeries {
     }
   }
 
-  private static byte[][] tsCreateArgs(String key, long retentionTime, boolean uncompressed, Map<String, String> labels) {
-    byte[][] args = new byte[1 + (labels==null ? 0 : 2*labels.size()+1) + (retentionTime>=0 ? 2 : 0 ) + (uncompressed?1:0)][];
+  private static byte[][] tsCreateArgs(String key, Long retentionTime, boolean uncompressed, Map<String, String> labels) {
+    byte[][] args = new byte[1 + (labels==null ? 0 : 2*labels.size()+1) + (retentionTime != null ? 2 : 0 ) + (uncompressed?1:0)][];
     int i=0;
 
     args[i++] = SafeEncoder.encode(key);
-    if(retentionTime>=0) {
+    if(retentionTime != null) {
       args[i++] = Keyword.RETENTION.getRaw();
-      args[i++] = Protocol.toByteArray(retentionTime);
+      args[i++] = Protocol.toByteArray(retentionTime.longValue());
     }
     if(uncompressed) {
       args[i++] = Keyword.UNCOMPRESSED.getRaw();
@@ -157,7 +163,10 @@ public class RedisTimeSeries {
    * @return
    */
   public boolean alter(String key, Map<String, String> labels) {
-    return alter(key,-1, labels );
+    try (Jedis conn = getConnection()) {
+      byte[][] args = tsAlterArgs(key, null, labels);
+      return sendCommand(conn, Command.ALTER, args).getStatusCodeReply().equals("OK");
+    }
   }
 
   /**
@@ -174,13 +183,13 @@ public class RedisTimeSeries {
     }
   }
 
-  private static byte[][] tsAlterArgs(String key, long retentionTime, Map<String, String> labels) {
-    byte[][] args = new byte[1 + (retentionTime>=0 ? 2 : 0 ) + (labels==null ? 0 : 2*labels.size()+1)][];
+  private static byte[][] tsAlterArgs(String key, Long retentionTime, Map<String, String> labels) {
+    byte[][] args = new byte[1 + (retentionTime!=null ? 2 : 0) + (labels==null ? 0 : 2*labels.size()+1)][];
     int i=0;
     args[i++] = SafeEncoder.encode(key);
-    if (retentionTime>=0){
+    if (retentionTime !=null){
       args[i++] = Keyword.RETENTION.getRaw();
-      args[i++] = Protocol.toByteArray(retentionTime);
+      args[i++] = Protocol.toByteArray(retentionTime.longValue());
     }
     if(labels != null) {
       args[i++] = Keyword.LABELS.getRaw();
@@ -232,9 +241,8 @@ public class RedisTimeSeries {
    */
   public long add(String sourceKey, double value) {
     try (Jedis conn = getConnection()) {
-      return sendCommand(conn, Command.ADD, SafeEncoder.encode(sourceKey),
-          STAR, Protocol.toByteArray(value))
-          .getIntegerReply();
+      byte[][] args = tsAddArgs(sourceKey, null, value, null, false, null);
+      return sendCommand(conn, Command.ADD, args).getIntegerReply();
     }
   }
 
@@ -248,9 +256,8 @@ public class RedisTimeSeries {
    */
   public long add(String sourceKey, long timestamp, double value) {
     try (Jedis conn = getConnection()) {
-      return sendCommand(conn, Command.ADD, SafeEncoder.encode(sourceKey),
-          timestamp>0 ? Protocol.toByteArray(timestamp) : STAR, Protocol.toByteArray(value))
-          .getIntegerReply();
+      byte[][] args = tsAddArgs(sourceKey, timestamp, value, null, false, null);
+      return sendCommand(conn, Command.ADD, args).getIntegerReply();
     }
   }
 
@@ -264,9 +271,22 @@ public class RedisTimeSeries {
    * @return
    */
   public long add(String sourceKey, long timestamp, double value, long retentionTime) {
+    return add(sourceKey, timestamp, value, retentionTime, false, null);
+  }
+
+  /**
+   * TS.ADD key * value [RETENTION retentionTime]
+   *
+   * @param sourceKey
+   * @param timestamp
+   * @param value
+   * @param retentionTime
+   * @return
+   */
+  public long add(String sourceKey, double value, long retentionTime) {
     try (Jedis conn = getConnection()) {
-      return sendCommand(conn, Command.ADD, SafeEncoder.encode(sourceKey), timestamp>0 ? Protocol.toByteArray(timestamp) : STAR,
-          Protocol.toByteArray(value), Keyword.RETENTION.getRaw(), Protocol.toByteArray(retentionTime)).getIntegerReply();
+      byte[][] args = tsAddArgs(sourceKey, null, value, retentionTime, false, null);
+      return sendCommand(conn, Command.ADD, args).getIntegerReply();
     }
   }
 
@@ -280,7 +300,10 @@ public class RedisTimeSeries {
    * @return
    */
   public long add(String sourceKey, long timestamp, double value, Map<String, String> labels) {
-    return add(sourceKey, timestamp, value, -1, false, labels);
+    try (Jedis conn = getConnection()) {
+      byte[][] args = tsAddArgs(sourceKey, timestamp, value, null, false, labels);
+      return sendCommand(conn, Command.ADD, args).getIntegerReply();
+    }
   }
 
   /**
@@ -294,7 +317,10 @@ public class RedisTimeSeries {
    * @return
    */
   public long add(String sourceKey, long timestamp, double value, long retentionTime, Map<String, String> labels) {
-    return add(sourceKey, timestamp, value, retentionTime, false, labels);
+    try (Jedis conn = getConnection()) {
+      byte[][] args = tsAddArgs(sourceKey, timestamp, value, retentionTime, false, labels);
+      return sendCommand(conn, Command.ADD, args).getIntegerReply();
+    }
   }
 
   /**
@@ -315,16 +341,16 @@ public class RedisTimeSeries {
     }
   }
 
-  private static byte[][] tsAddArgs(String sourceKey, long timestamp, double value, long retentionTime, boolean uncompressed, Map<String, String> labels) {
-    byte[][] args = new byte[3 + (retentionTime>=0 ? 2 : 0 ) + (labels==null ? 0 : 2*labels.size()+1) + (uncompressed?1:0)][];
+  private static byte[][] tsAddArgs(String sourceKey, Long timestamp, double value, Long retentionTime, boolean uncompressed, Map<String, String> labels) {
+    byte[][] args = new byte[3 + (retentionTime!=null ? 2 : 0 ) + (labels==null ? 0 : 2*labels.size()+1) + (uncompressed?1:0)][];
     int i=0;
 
     args[i++] = SafeEncoder.encode(sourceKey);
-    args[i++] = timestamp>0 ? Protocol.toByteArray(timestamp) : STAR;
+    args[i++] = timestamp!=null ? Protocol.toByteArray(timestamp.longValue()) : STAR;
     args[i++] = Protocol.toByteArray(value);
-    if(retentionTime>=0){
+    if(retentionTime != null){
       args[i++] = Keyword.RETENTION.getRaw();
-      args[i++] = Protocol.toByteArray(retentionTime);
+      args[i++] = Protocol.toByteArray(retentionTime.longValue());
     }
     if(uncompressed) {
       args[i++] = Keyword.UNCOMPRESSED.getRaw();
@@ -672,11 +698,11 @@ public class RedisTimeSeries {
    */
   public Value get(String key) {
     try (Jedis conn = getConnection()) {
-      List<?> touple = sendCommand(conn, Command.GET, SafeEncoder.encode(key)).getObjectMultiBulkReply();
-      if(touple.isEmpty()) {
+      List<?> tuple = sendCommand(conn, Command.GET, SafeEncoder.encode(key)).getObjectMultiBulkReply();
+      if(tuple.isEmpty()) {
         return null;
       }
-      return new Value((Long)touple.get(0), Double.parseDouble(SafeEncoder.encode((byte[])touple.get(1))));
+      return Value.parseValue((List<Object>) tuple);
     }
   }
 

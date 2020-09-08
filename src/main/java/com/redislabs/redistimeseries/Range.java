@@ -40,17 +40,22 @@ public class Range {
     return values;
   }
 
+  private static Map<String, String> getLabelsStringStringMap(List<?> resLabels) {
+    Map<String, String> rangeLabels = new HashMap<>(resLabels.size());
+    for (Object resLabel : resLabels) {
+      List<byte[]> label = (List<byte[]>) resLabel;
+      rangeLabels.put(SafeEncoder.encode(label.get(0)), SafeEncoder.encode(label.get(1)));
+    }
+    return rangeLabels;
+  }
+
   protected static Range[] parseRanges(List<?> result) {
     Range[] ranges = new Range[result.size()];
     for(int j=0; j<ranges.length; ++j) {
       List<?> series = (List<?>)result.get(j);
       String resKey = SafeEncoder.encode((byte[])series.get(0));
       List<?> resLabels = (List<?>)series.get(1);
-      Map<String, String> rangeLabels = new HashMap<>();
-      for (Object resLabel : resLabels) {
-        List<byte[]> label = (List<byte[]>) resLabel;
-        rangeLabels.put(SafeEncoder.encode(label.get(0)), SafeEncoder.encode(label.get(1)));
-      }
+      Map<String, String> rangeLabels = getLabelsStringStringMap(resLabels);
       Value[] values = parseRange((List<Object>) series.get(2));
       ranges[j] = new Range(resKey, rangeLabels, values);
     }
@@ -63,12 +68,7 @@ public class Range {
       List<?> series = (List<?>)result.get(j);
       String resKey = SafeEncoder.encode((byte[])series.get(0));
       List<?> resLabels = (List<?>)series.get(1);
-      Map<String, String> rangeLabels = new HashMap<>();
-      for (Object resLabel : resLabels) {
-        List<byte[]> label = (List<byte[]>) resLabel;
-        rangeLabels.put(SafeEncoder.encode(label.get(0)), SafeEncoder.encode(label.get(1)));
-      }
-
+      Map<String, String> rangeLabels = getLabelsStringStringMap(resLabels);
       List<?> tuple = (List<?>)series.get(2);
       Value[] values;
       if(tuple.isEmpty()) {
@@ -101,8 +101,8 @@ public class Range {
       args[i++] = Protocol.toByteArray(count);
     }
 
-    args[i++] = Keyword.FILTER.getRaw();
     if(filters != null) {
+      args[i++] = Keyword.FILTER.getRaw();
       for(String label : filters) {
         args[i++] = SafeEncoder.encode(label);
       }
