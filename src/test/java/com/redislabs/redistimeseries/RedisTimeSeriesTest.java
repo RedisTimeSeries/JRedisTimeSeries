@@ -254,7 +254,7 @@ public class RedisTimeSeriesTest {
     long add1 = client.add("seriesAdd2",1.1, 10000 );
     Assert.assertTrue(add1>startTime);
     Thread.sleep(1);
-    long add2 = client.add("seriesAdd2", 3.2q);
+    long add2 = client.add("seriesAdd2", 3.2);
     Assert.assertTrue(add2>add1);
     Thread.sleep(1);
     long add3 = client.add("seriesAdd2", 3.2);
