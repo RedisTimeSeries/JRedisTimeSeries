@@ -83,19 +83,11 @@ public class Range {
     return ranges;
   }
 
-  protected static byte[][] multiRangeArgs(Long from, Long to, Aggregation aggregation, long timeBucket, boolean withLabels, Integer count, String[] filters) {
+  protected static byte[][] multiRangeArgs(long from, long to, Aggregation aggregation, long timeBucket, boolean withLabels, Integer count, String[] filters) {
     byte[][] args = new byte[2 + (filters==null?0:1+filters.length) + (aggregation==null?0:3) + (withLabels?1:0) + (count==null?0:2)][];
     int i=0;
-    if(from!=null){
-      args[i++] = Protocol.toByteArray(from);
-    } else {
-      args[i++] = SafeEncoder.encode("-");
-    }
-    if(from!=null){
-      args[i++] = Protocol.toByteArray(to);
-    } else {
-      args[i++] = SafeEncoder.encode("+");
-    }
+    args[i++] = Protocol.toByteArray(from);
+    args[i++] = Protocol.toByteArray(to);
     if(aggregation!= null) {
       args[i++] = Keyword.AGGREGATION.getRaw();
       args[i++] = aggregation.getRaw();
