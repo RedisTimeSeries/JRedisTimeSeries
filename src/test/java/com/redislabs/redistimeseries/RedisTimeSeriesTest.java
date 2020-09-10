@@ -7,6 +7,7 @@ import org.junit.Before;
 import org.junit.Test;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
+import redis.clients.jedis.Module;
 import redis.clients.jedis.exceptions.JedisDataException;
 
 import java.util.*;
@@ -15,12 +16,20 @@ public class RedisTimeSeriesTest {
 
   private final JedisPool pool = new JedisPool();
   private final RedisTimeSeries client = new RedisTimeSeries();
+  private int moduleVersion = 999999; 
 
   @Before
   public void testClient() {
     try (Jedis conn = pool.getResource()) {
       conn.flushAll();
-    }
+      List<Module> moduleList = conn.moduleList();
+      for( Module m : moduleList) {
+        if(m.getName().equals("timeseries")) {
+          moduleVersion = m.getVersion();
+          break;
+        }
+      }
+    }      
   }
 
   @Test
@@ -161,7 +170,7 @@ public class RedisTimeSeriesTest {
     }catch(JedisDataException e) {}
 
     try {
-      client.mrange(500L, 4600L, Aggregation.COUNT, 1, (String[])null);
+      client.mrange(500L, 4600L, Aggregation.COUNT, 1, null);
       Assert.fail();
     }catch(JedisDataException e) {}
 
@@ -196,17 +205,19 @@ public class RedisTimeSeriesTest {
     Assert.assertEquals(1000L, client.add("seriesAdd3", 1000L, 1.1, labels3));
     Assert.assertEquals(2000L, client.add("seriesAdd3", 2000L, 1.1, labels3));
     Assert.assertEquals(3000L, client.add("seriesAdd3", 3000L, 1.1, labels3));
-    Range[] ranges3 = client.mrange(500L, 4600L, Aggregation.AVG, 1, true, 2, "l4=v4");
+    Range[] ranges3 = client.mrange(500L, 4600L, Aggregation.AVG, 1L, true, 2, "l4=v4");
     Assert.assertEquals(2, ranges3.length);
     Assert.assertEquals(1, ranges3[0].getValues().length);
     Assert.assertEquals(labels2, ranges3[0].getLabels());
     Assert.assertEquals(2, ranges3[1].getValues().length);
     Assert.assertEquals(labels3, ranges3[1].getLabels());
 
-    // Back filling
-    Assert.assertEquals(800L, client.add("seriesAdd", 800L, 1.1));
-    Assert.assertEquals(700L, client.add("seriesAdd", 700L, 1.1, 10000));
-    Assert.assertEquals(600L, client.add("seriesAdd", 600L, 1.1, 10000, null));
+    if(moduleVersion>=10400) {
+      // Back filling
+      Assert.assertEquals(800L, client.add("seriesAdd", 800L, 1.1));
+      Assert.assertEquals(700L, client.add("seriesAdd", 700L, 1.1, 10000));
+      Assert.assertEquals(600L, client.add("seriesAdd", 600L, 1.1, 10000, null));
+    }
 
     // Range on none existing key
     try {
@@ -240,13 +251,13 @@ public class RedisTimeSeriesTest {
 
     long startTime = System.currentTimeMillis();
     Thread.sleep(1);
-    long add1 = client.add("seriesAdd2", 0, 1.1, 10000, null);
+    long add1 = client.add("seriesAdd2",1.1, 10000 );
     Assert.assertTrue(add1>startTime);
     Thread.sleep(1);
-    long add2 = client.add("seriesAdd2", 0, 3.2, null);
+    long add2 = client.add("seriesAdd2", 3.2);
     Assert.assertTrue(add2>add1);
     Thread.sleep(1);
-    long add3 = client.add("seriesAdd2", 0, 3.2, 10000);
+    long add3 = client.add("seriesAdd2", 3.2);
     Assert.assertTrue(add3>add2);
     Thread.sleep(1);
     long add4 = client.add("seriesAdd2", -1.2);
@@ -292,43 +303,28 @@ public class RedisTimeSeriesTest {
   }
 
   @Test
-  public void testIncDec() throws InterruptedException {
+  public void testIncrByDecrBy() throws InterruptedException {
     Assert.assertTrue(client.create("seriesIncDec", 100*1000/*100sec retentionTime*/));
-    long startTime = System.currentTimeMillis();
-    Assert.assertEquals(startTime, client.add("seriesIncDec", -1, 1, 10000, null), 0);
-
-    Thread.sleep(1);
-    startTime = System.currentTimeMillis();
-    Assert.assertEquals(startTime, client.incrBy("seriesIncDec", 3, startTime), 0);
-
-    Thread.sleep(1);
-    startTime = System.currentTimeMillis();
-    Assert.assertEquals(startTime, client.decrBy("seriesIncDec", 2, startTime), 0);
-
-    Value[] values = client.range("seriesIncDec", 1L, Long.MAX_VALUE);
+    Assert.assertEquals(1L, client.add("seriesIncDec", 1L, 1, 10000, null), 0);
+    Assert.assertEquals(2L, client.incrBy("seriesIncDec", 3, 2L), 0);
+    Assert.assertEquals(3L, client.decrBy("seriesIncDec", 2, 3L), 0);
+    Value[] values = client.range("seriesIncDec", 1L, 3L);
     Assert.assertEquals(3, values.length);
     Assert.assertEquals(2, values[2].getValue(), 0);
-
-    Thread.sleep(1);
-    startTime = System.currentTimeMillis();
-    Assert.assertEquals(startTime, client.incrBy("seriesIncDec", 3), 0);
-
-    Thread.sleep(1);
-    startTime = System.currentTimeMillis();
-    Assert.assertEquals(startTime, client.decrBy("seriesIncDec", 2), 0);
-
-    Assert.assertEquals(startTime, client.decrBy("seriesIncDec", 2, startTime), 0);
-
-    values = client.range("seriesIncDec", 1L, Long.MAX_VALUE);
-    Assert.assertEquals(5, values.length);
-    Assert.assertEquals(1, values[4].getValue(), 0);
-
-    try {
-      client.incrBy("seriesIncDec", 3, startTime-1);
-      Assert.fail();
-    } catch(JedisDataException e) {
-      // Error on incrby in the past
+    if(moduleVersion>=10400) {
+      Assert.assertEquals(3L, client.decrBy("seriesIncDec", 2,3L), 0);
+      values = client.range("seriesIncDec", 1L, Long.MAX_VALUE);
+      Assert.assertEquals(3, values.length);
+    } else {
+      try {
+        client.incrBy("seriesIncDec", 3, 0L);
+        Assert.fail();
+      } catch(JedisDataException e) {
+        // Error on incrby in the past
+      }
     }
+
+
   }
 
   @Test
@@ -439,6 +435,11 @@ public class RedisTimeSeriesTest {
 
     Info info = client.info("source");
     Assert.assertEquals( (Long)10000L, info.getProperty("retentionTime"));
+    if(moduleVersion>=10400) {
+      Assert.assertEquals( (Long)4096L, info.getProperty("chunkSize"));
+    } else {
+      Assert.assertEquals( (Long)256L, info.getProperty("maxSamplesPerChunk"));
+    }
     Assert.assertEquals( "v1", info.getLabel("l1"));
     Assert.assertEquals( "v2", info.getLabel("l2"));
     Assert.assertNull(info.getLabel("l3"));
@@ -454,46 +455,79 @@ public class RedisTimeSeriesTest {
       // Error on info on none existing series
     }
   }
-
+  
   @Test
   public void testRevRange() {
+    if(moduleVersion<10300)
+      return;
+    
     Map<String, String> labels = new HashMap<>();
     labels.put("l1", "v1");
-    labels.put("l2", "v2");
+    labels.put("l2", "v2");    
     Assert.assertTrue(client.create("seriesAdd", 10000L/*retentionTime*/, labels));
 
-    Assert.assertEquals(1000L, client.add("seriesAdd", 1000L, 1.1, 10000, null));
-    Assert.assertEquals(2000L, client.add("seriesAdd", 2000L, 0.9, null));
-    Assert.assertEquals(3200L, client.add("seriesAdd", 3200L, 1.1, 10000));
-    Assert.assertEquals(4500L, client.add("seriesAdd", 4500L, -1.1));
+    Assert.assertEquals(1000L, client.add("seriesRevRange", 1000L, 1.1, 10000, null));
+    Assert.assertEquals(2000L, client.add("seriesRevRange", 2000L, 0.9, null));
+    Assert.assertEquals(3200L, client.add("seriesRevRange", 3200L, 1.1, 10000));
+    Assert.assertEquals(4500L, client.add("seriesRevRange", 4500L, -1.1));
 
-    Value[] rawValues =
-        new Value[]{new Value(1000L, 1.1), new Value(2000L, 0.9), new Value(3200L, 1.1),
-            new Value(4500L, -1.1)};
-    Value[] values = client.revrange("seriesAdd", 800L, 3000L);
+    Value[] rawValues = new  Value[]{new Value(4500L,-1.1), new Value(3200L,1.1), new Value(2000L,0.9), new Value(1000L,1.1)};
+    Value[] values = client.revrange("seriesRevRange", 800L, 3000L);
     Assert.assertEquals(2, values.length);
-    Value[] range = Arrays.copyOfRange(rawValues, 0, 2);
-    Assert.assertArrayEquals(values, reverse(range));
-    values = client.range("seriesAdd", 800L, 5000L);
+    Assert.assertArrayEquals(Arrays.copyOfRange(rawValues, 2, 4), values);
+    values = client.revrange("seriesRevRange", 800L, 5000L);
     Assert.assertEquals(4, values.length);
     Assert.assertArrayEquals(rawValues, values);
 
-    Value[] expectedCountValues =
-        new Value[]{new Value(2000L, 1), new Value(3200L, 1), new Value(4500L, 1)};
-    values = client.revrange("seriesAdd", 1200L, 4600L, Aggregation.COUNT, 1);
+    Value[] expectedCountValues = new  Value[]{new Value(4500L,1), new Value(3200L,1), new Value(2000L,1)};
+    values = client.revrange("seriesRevRange", 1200L, 4600L, Aggregation.COUNT, 1);
     Assert.assertEquals(3, values.length);
-    Assert.assertArrayEquals(expectedCountValues, reverse(values));
+    Assert.assertArrayEquals(expectedCountValues, values);
 
-    Value[] expectedAvgValues =
-        new Value[]{new Value(0L, 1.1), new Value(2000L, 1), new Value(4000L, -1.1)};
-    values = client.revrange("seriesAdd", 500L, 4600L, Aggregation.AVG, 2000L);
+    Value[] expectedAvgValues = new Value[]{new Value(4000L,-1.1), new Value(2000L,1), new Value(0L,1.1) };
+    values = client.revrange("seriesRevRange", 500L, 4600L, Aggregation.AVG, 2000L);
     Assert.assertEquals(3, values.length);
-    Assert.assertArrayEquals(expectedAvgValues, reverse(values));
+    Assert.assertArrayEquals(expectedAvgValues, values);
   }
-
-  private static <T> T[] reverse(T[] array) {
-    Collections.reverse(Arrays.asList(array));
-    //noinspection unchecked
-    return (T[]) Arrays.stream(array).toArray();
+  
+  @Test
+  public void testMRevRange() {
+    if(moduleVersion<10300)
+      return;
+    
+    Map<String, String> labels1 = new HashMap<>();
+    labels1.put("l3", "v3");
+    labels1.put("l4", "v4");    
+    Assert.assertEquals(1000L, client.add("seriesMRevRange1", 1000L, 1.1, 10000, labels1));
+    Assert.assertEquals(2222L, client.add("seriesMRevRange1", 2222L, 3.1, 10000, labels1));
+    Range[] ranges1 = client.mrevrange(500L, 4600L, Aggregation.COUNT, 1, true, "l4=v4");
+    Assert.assertEquals(1, ranges1.length);
+    Assert.assertEquals(labels1, ranges1[0].getLabels());
+    Assert.assertArrayEquals(new Value[]{new Value(2222L, 1.0), new Value(1000L, 1.0)}, ranges1[0].getValues());
+    
+    Map<String, String> labels2 = new HashMap<>();
+    labels2.put("l3", "v3");
+    labels2.put("l4", "v44");    
+    Assert.assertEquals(1000L, client.add("seriesMRevRange2", 1000L, 8.88, 10000, labels2));
+    Assert.assertEquals(1111L, client.add("seriesMRevRange2", 1111L, 99.99, 10000, labels2));
+    Range[] ranges2 = client.mrevrange(500L, 4600L, "l3=v3");
+    Assert.assertEquals(2, ranges2.length);
+    Assert.assertEquals(new HashMap<String, String>(), ranges2[0].getLabels());
+    Assert.assertArrayEquals(new Value[]{new Value(2222L, 3.1), new Value(1000L, 1.1)}, ranges2[0].getValues());
+    Assert.assertEquals(new HashMap<String, String>(), ranges2[0].getLabels());
+    Assert.assertArrayEquals(new Value[]{new Value(1111L, 99.99), new Value(1000L, 8.88)}, ranges2[1].getValues());
+    
+    Map<String, String> labels3 = new HashMap<>();
+    labels3.put("l3", "v33");
+    labels3.put("l4", "v4");    
+    Assert.assertEquals(2200L, client.add("seriesMRevRange3", 2200L, -1.1, labels3));
+    Assert.assertEquals(2400L, client.add("seriesMRevRange3", 2400L, 1.1, labels3));
+    Assert.assertEquals(3300L, client.add("seriesMRevRange3", 3300L, -33, labels3));
+    Range[] ranges3 = client.mrevrange(500L, 4600L, Aggregation.AVG, 500, true, 5, "l4=v4");
+    Assert.assertEquals(2, ranges3.length);
+    Assert.assertEquals(labels1, ranges3[0].getLabels());
+    Assert.assertArrayEquals(new Value[]{new Value(2000L, 3.1), new Value(1000L, 1.1)}, ranges3[0].getValues());
+    Assert.assertEquals(labels3, ranges3[1].getLabels());
+    Assert.assertArrayEquals(new Value[]{new Value(3000L, -33.0), new Value(2000L, 0.0)}, ranges3[1].getValues());
   }
 }
