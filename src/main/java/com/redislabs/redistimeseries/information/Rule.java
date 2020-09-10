@@ -6,7 +6,7 @@ public class Rule {
   private final String target;
   private final long value;
   private final Aggregation aggregation;
-  
+
   public Rule(String target, long value, Aggregation aggregation) {
     this.target = target;
     this.value = value;

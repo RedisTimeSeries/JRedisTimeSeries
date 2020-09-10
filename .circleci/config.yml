@@ -44,6 +44,8 @@ jobs:
           key: v1-dependencies-{{ checksum "pom.xml" }}
         
       - run: mvn pmd:check
+      # validate code format
+      - run: mvn git-code-format:validate-code-format -Dgcf.globPattern=**/*
       - run: mvn integration-test 
 
       - early_return_for_forked_pull_requests
