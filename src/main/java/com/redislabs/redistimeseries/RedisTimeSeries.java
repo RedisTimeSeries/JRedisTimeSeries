@@ -278,7 +278,6 @@ public class RedisTimeSeries {
    * TS.ADD key * value [RETENTION retentionTime]
    *
    * @param sourceKey
-   * @param timestamp
    * @param value
    * @param retentionTime
    * @return
