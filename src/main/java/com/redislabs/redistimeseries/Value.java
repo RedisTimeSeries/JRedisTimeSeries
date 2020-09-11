@@ -1,8 +1,7 @@
 package com.redislabs.redistimeseries;
 
-import redis.clients.jedis.util.SafeEncoder;
-
 import java.util.List;
+import redis.clients.jedis.util.SafeEncoder;
 
 public class Value {
 
@@ -17,16 +16,16 @@ public class Value {
   public long getTime() {
     return time;
   }
+
   public double getValue() {
     return val;
   }
 
   @Override
   public boolean equals(Object o) {
-    if(!(o instanceof Value))
-        return false;
+    if (!(o instanceof Value)) return false;
 
-    Value other = (Value)o;
+    Value other = (Value) o;
     return other.time == this.time && other.val == this.val;
   }
 
@@ -41,6 +40,7 @@ public class Value {
   }
 
   protected static Value parseValue(List<Object> tuple) {
-    return new Value((Long)tuple.get(0), Double.parseDouble(SafeEncoder.encode((byte[])tuple.get(1))));
+    return new Value(
+        (Long) tuple.get(0), Double.parseDouble(SafeEncoder.encode((byte[]) tuple.get(1))));
   }
 }

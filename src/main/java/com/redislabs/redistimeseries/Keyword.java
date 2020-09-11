@@ -3,25 +3,24 @@ package com.redislabs.redistimeseries;
 import redis.clients.jedis.commands.ProtocolCommand;
 import redis.clients.jedis.util.SafeEncoder;
 
-public enum Keyword implements ProtocolCommand{
+public enum Keyword implements ProtocolCommand {
+  RESET,
+  FILTER,
+  AGGREGATION,
+  LABELS,
+  RETENTION,
+  TIMESTAMP,
+  WITHLABELS,
+  COUNT,
+  UNCOMPRESSED;
 
-    RESET,
-    FILTER,    
-    AGGREGATION, 
-    LABELS, 
-    RETENTION,
-    TIMESTAMP,
-    WITHLABELS,
-    COUNT,
-    UNCOMPRESSED;
-    
-    private final byte[] raw;
+  private final byte[] raw;
 
-    Keyword() {
-        raw = SafeEncoder.encode(this.name());
-    }
+  Keyword() {
+    raw = SafeEncoder.encode(this.name());
+  }
 
-    public byte[] getRaw() {
-        return raw;
-    }
+  public byte[] getRaw() {
+    return raw;
+  }
 }

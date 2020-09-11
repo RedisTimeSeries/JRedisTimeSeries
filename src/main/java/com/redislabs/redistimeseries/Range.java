@@ -1,11 +1,10 @@
 package com.redislabs.redistimeseries;
 
-import redis.clients.jedis.Protocol;
-import redis.clients.jedis.util.SafeEncoder;
-
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import redis.clients.jedis.Protocol;
+import redis.clients.jedis.util.SafeEncoder;
 
 public class Range {
   private final String key;
@@ -33,8 +32,9 @@ public class Range {
   protected static Value[] parseRange(List<Object> range) {
     Value[] values = new Value[range.size()];
 
-    for(int i=0; i<values.length ; ++i) {
-      @SuppressWarnings("unchecked") List<Object> tuple = (List<Object>)range.get(i);
+    for (int i = 0; i < values.length; ++i) {
+      @SuppressWarnings("unchecked")
+      List<Object> tuple = (List<Object>) range.get(i);
       values[i] = Value.parseValue(tuple);
     }
     return values;
@@ -51,10 +51,10 @@ public class Range {
 
   protected static Range[] parseRanges(List<?> result) {
     Range[] ranges = new Range[result.size()];
-    for(int j=0; j<ranges.length; ++j) {
-      List<?> series = (List<?>)result.get(j);
-      String resKey = SafeEncoder.encode((byte[])series.get(0));
-      List<?> resLabels = (List<?>)series.get(1);
+    for (int j = 0; j < ranges.length; ++j) {
+      List<?> series = (List<?>) result.get(j);
+      String resKey = SafeEncoder.encode((byte[]) series.get(0));
+      List<?> resLabels = (List<?>) series.get(1);
       Map<String, String> rangeLabels = getLabelsStringStringMap(resLabels);
       Value[] values = parseRange((List<Object>) series.get(2));
       ranges[j] = new Range(resKey, rangeLabels, values);
@@ -64,14 +64,14 @@ public class Range {
 
   protected static Range[] parseMget(List<?> result) {
     Range[] ranges = new Range[result.size()];
-    for(int j=0; j<ranges.length; ++j) {
-      List<?> series = (List<?>)result.get(j);
-      String resKey = SafeEncoder.encode((byte[])series.get(0));
-      List<?> resLabels = (List<?>)series.get(1);
+    for (int j = 0; j < ranges.length; ++j) {
+      List<?> series = (List<?>) result.get(j);
+      String resKey = SafeEncoder.encode((byte[]) series.get(0));
+      List<?> resLabels = (List<?>) series.get(1);
       Map<String, String> rangeLabels = getLabelsStringStringMap(resLabels);
-      List<?> tuple = (List<?>)series.get(2);
+      List<?> tuple = (List<?>) series.get(2);
       Value[] values;
-      if(tuple.isEmpty()) {
+      if (tuple.isEmpty()) {
         values = new Value[0];
       } else {
         values = new Value[1];
@@ -83,27 +83,41 @@ public class Range {
     return ranges;
   }
 
-  protected static byte[][] multiRangeArgs(long from, long to, Aggregation aggregation, long timeBucket, boolean withLabels, Integer count, String[] filters) {
-    byte[][] args = new byte[2 + (filters==null?0:1+filters.length) + (aggregation==null?0:3) + (withLabels?1:0) + (count==null?0:2)][];
-    int i=0;
+  protected static byte[][] multiRangeArgs(
+      long from,
+      long to,
+      Aggregation aggregation,
+      long timeBucket,
+      boolean withLabels,
+      Integer count,
+      String[] filters) {
+    byte[][] args =
+        new byte
+            [2
+                + (filters == null ? 0 : 1 + filters.length)
+                + (aggregation == null ? 0 : 3)
+                + (withLabels ? 1 : 0)
+                + (count == null ? 0 : 2)]
+            [];
+    int i = 0;
     args[i++] = Protocol.toByteArray(from);
     args[i++] = Protocol.toByteArray(to);
-    if(aggregation!= null) {
+    if (aggregation != null) {
       args[i++] = Keyword.AGGREGATION.getRaw();
       args[i++] = aggregation.getRaw();
       args[i++] = Protocol.toByteArray(timeBucket);
     }
-    if(withLabels) {
+    if (withLabels) {
       args[i++] = Keyword.WITHLABELS.getRaw();
     }
-    if(count!=null) {
+    if (count != null) {
       args[i++] = Keyword.COUNT.getRaw();
       args[i++] = Protocol.toByteArray(count.intValue());
     }
 
-    if(filters != null) {
+    if (filters != null) {
       args[i++] = Keyword.FILTER.getRaw();
-      for(String label : filters) {
+      for (String label : filters) {
         args[i++] = SafeEncoder.encode(label);
       }
     }
