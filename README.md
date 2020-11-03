@@ -20,7 +20,7 @@ Java Client for RedisTimeSeries
     <dependency>
       <groupId>com.redislabs</groupId>
       <artifactId>jredistimeseries</artifactId>
-      <version>1.3.0</version>
+      <version>1.4.0</version>
     </dependency>
   </dependencies>
 ```
@@ -43,7 +43,7 @@ and
     <dependency>
       <groupId>com.redislabs</groupId>
       <artifactId>jredistimeseries</artifactId>
-      <version>1.4.0-SNAPSHOT</version>
+      <version>1.5.0-SNAPSHOT</version>
     </dependency>
   </dependencies>
 ```
