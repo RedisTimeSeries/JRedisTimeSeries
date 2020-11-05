@@ -62,6 +62,12 @@ public class RedisTimeSeriesTest {
       Assert.assertEquals("TSDB-TYPE", conn.type("series5"));
     }
 
+    Assert.assertTrue(
+        client.create("series6", 7898 /*retentionTime*/, true, 1000, DuplicatePolicy.MAX, labels));
+    try (Jedis conn = pool.getResource()) {
+      Assert.assertEquals("TSDB-TYPE", conn.type("series6"));
+    }
+
     try {
       Assert.assertTrue(client.create("series1", 10 /*retentionTime*/, labels));
       Assert.fail();
@@ -82,6 +88,19 @@ public class RedisTimeSeriesTest {
 
     try {
       Assert.assertTrue(client.create("series1"));
+      Assert.fail();
+    } catch (JedisDataException e) {
+    }
+
+    try {
+      Assert.assertTrue(client.create("series1"));
+      Assert.fail();
+    } catch (JedisDataException e) {
+    }
+
+    try {
+      Assert.assertTrue(
+          client.create("series7", 7898 /*retentionTime*/, true, -10, DuplicatePolicy.MAX, labels));
       Assert.fail();
     } catch (JedisDataException e) {
     }
