@@ -552,4 +552,13 @@ public class RedisTimeSeriesTest {
     Assert.assertArrayEquals(
         new Value[] {new Value(3000L, -33.0), new Value(2000L, 0.0)}, ranges3[1].getValues());
   }
+
+  @Test
+  public void testCloseable() {
+    JedisPool closeablePool = new JedisPool();
+    try (RedisTimeSeries closeableClient = new RedisTimeSeries(closeablePool)) {
+      Assert.assertEquals(111, closeableClient.add("closeableKey", 111, 1.111));
+    }
+    Assert.assertTrue(closeablePool.isClosed());
+  }
 }
