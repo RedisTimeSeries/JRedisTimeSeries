@@ -66,7 +66,7 @@ public class RedisTimeSeries implements AutoCloseable {
    */
   public boolean create(String key) {
     try (Jedis conn = getConnection()) {
-      byte[][] args = tsCreateArgs(key, null, false, null);
+      byte[][] args = tsCreateArgs(key, null, false, null, null, null);
       return sendCommand(conn, Command.CREATE, args).getStatusCodeReply().equals("OK");
     }
   }
@@ -91,7 +91,7 @@ public class RedisTimeSeries implements AutoCloseable {
    */
   public boolean create(String key, Map<String, String> labels) {
     try (Jedis conn = getConnection()) {
-      byte[][] args = tsCreateArgs(key, null, false, labels);
+      byte[][] args = tsCreateArgs(key, null, false, null, null, labels);
       return sendCommand(conn, Command.CREATE, args).getStatusCodeReply().equals("OK");
     }
   }
@@ -120,18 +120,51 @@ public class RedisTimeSeries implements AutoCloseable {
   public boolean create(
       String key, long retentionTime, boolean uncompressed, Map<String, String> labels) {
     try (Jedis conn = getConnection()) {
-      byte[][] args = tsCreateArgs(key, retentionTime, uncompressed, labels);
+      byte[][] args = tsCreateArgs(key, retentionTime, uncompressed, null, null, labels);
+      return sendCommand(conn, Command.CREATE, args).getStatusCodeReply().equals("OK");
+    }
+  }
+
+  /**
+   * TS.CREATE key [RETENTION retentionTime] [UNCOMPRESSED] [CHUNK_SIZE size] [ON_DUPLICATE policy]
+   * [LABELS label value..]
+   *
+   * @param key
+   * @param retentionTime
+   * @param uncompressed
+   * @param labels
+   * @param chunkSize
+   * @param duplicatePolicy
+   * @return
+   */
+  public boolean create(
+      String key,
+      long retentionTime,
+      boolean uncompressed,
+      long chunkSize,
+      DuplicatePolicy duplicatePolicy,
+      Map<String, String> labels) {
+    try (Jedis conn = getConnection()) {
+      byte[][] args =
+          tsCreateArgs(key, retentionTime, uncompressed, chunkSize, duplicatePolicy, labels);
       return sendCommand(conn, Command.CREATE, args).getStatusCodeReply().equals("OK");
     }
   }
 
   private static byte[][] tsCreateArgs(
-      String key, Long retentionTime, boolean uncompressed, Map<String, String> labels) {
+      String key,
+      Long retentionTime,
+      boolean uncompressed,
+      Long chunkSize,
+      DuplicatePolicy duplicatePolicy,
+      Map<String, String> labels) {
     byte[][] args =
         new byte
             [1
                 + (labels == null ? 0 : 2 * labels.size() + 1)
                 + (retentionTime != null ? 2 : 0)
+                + (duplicatePolicy != null ? 2 : 0)
+                + (chunkSize != null ? 2 : 0)
                 + (uncompressed ? 1 : 0)]
             [];
     int i = 0;
@@ -143,6 +176,14 @@ public class RedisTimeSeries implements AutoCloseable {
     }
     if (uncompressed) {
       args[i++] = Keyword.UNCOMPRESSED.getRaw();
+    }
+    if (chunkSize != null) {
+      args[i++] = Keyword.CHUNK_SIZE.getRaw();
+      args[i++] = Protocol.toByteArray(chunkSize.longValue());
+    }
+    if (duplicatePolicy != null) {
+      args[i++] = Keyword.DUPLICATE_POLICY.getRaw();
+      args[i++] = duplicatePolicy.getRaw();
     }
 
     if (labels != null) {
