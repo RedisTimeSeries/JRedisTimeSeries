@@ -12,7 +12,7 @@ import redis.clients.jedis.Protocol;
 import redis.clients.jedis.util.Pool;
 import redis.clients.jedis.util.SafeEncoder;
 
-public class RedisTimeSeries {
+public class RedisTimeSeries implements AutoCloseable {
 
   private static final byte[] STAR = SafeEncoder.encode("*");
 
@@ -1033,5 +1033,10 @@ public class RedisTimeSeries {
     conf.setFairness(true);
 
     return conf;
+  }
+
+  @Override
+  public void close() {
+    this.pool.close();
   }
 }
