@@ -12,7 +12,9 @@ public enum Keyword implements ProtocolCommand {
   TIMESTAMP,
   WITHLABELS,
   COUNT,
-  UNCOMPRESSED;
+  UNCOMPRESSED,
+  CHUNK_SIZE,
+  DUPLICATE_POLICY;
 
   private final byte[] raw;
 
@@ -20,6 +22,7 @@ public enum Keyword implements ProtocolCommand {
     raw = SafeEncoder.encode(this.name());
   }
 
+  @Override
   public byte[] getRaw() {
     return raw;
   }
