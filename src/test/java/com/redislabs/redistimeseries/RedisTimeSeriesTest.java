@@ -246,6 +246,21 @@ public class RedisTimeSeriesTest {
       Assert.assertEquals(600L, client.add("seriesAdd", 600L, 1.1, 10000, null));
     }
 
+    Assert.assertEquals(
+        400L,
+        client.add(
+            "seriesAdd4",
+            400L,
+            0.4,
+            7898L /*retentionTime*/,
+            true,
+            1000L,
+            DuplicatePolicy.MAX,
+            labels));
+    try (Jedis conn = pool.getResource()) {
+      Assert.assertEquals("TSDB-TYPE", conn.type("seriesAdd4"));
+    }
+
     // Range on none existing key
     try {
       client.range("seriesAdd1", 500L, 4000L, Aggregation.COUNT, 1);

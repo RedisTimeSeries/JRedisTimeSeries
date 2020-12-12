@@ -14,7 +14,8 @@ public enum Keyword implements ProtocolCommand {
   COUNT,
   UNCOMPRESSED,
   CHUNK_SIZE,
-  DUPLICATE_POLICY;
+  DUPLICATE_POLICY,
+  ON_DUPLICATE;
 
   private final byte[] raw;
 
