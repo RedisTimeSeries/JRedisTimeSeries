@@ -23,6 +23,10 @@ public class RedisTimeSeries implements AutoCloseable {
     this("localhost", 6379);
   }
 
+  public RedisTimeSeries(String host) {
+    this(new JedisPool(host));
+  }
+
   /**
    * Create a new RedisTimeSeries client
    *
