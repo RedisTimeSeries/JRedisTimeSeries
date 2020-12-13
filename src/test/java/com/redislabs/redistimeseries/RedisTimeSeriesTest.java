@@ -255,11 +255,24 @@ public class RedisTimeSeriesTest {
             7898L /*retentionTime*/,
             true,
             1000L,
-            DuplicatePolicy.MAX,
+            DuplicatePolicy.SUM,
             labels));
     try (Jedis conn = pool.getResource()) {
       Assert.assertEquals("TSDB-TYPE", conn.type("seriesAdd4"));
     }
+    Assert.assertEquals(
+        400L,
+        client.add(
+            "seriesAdd4",
+            400L,
+            0.3,
+            7898L /*retentionTime*/,
+            true,
+            1000L,
+            DuplicatePolicy.SUM,
+            labels));
+    Assert.assertArrayEquals(
+        new Value[] {new Value(400L, 0.7)}, client.range("seriesAdd4", 0L, Long.MAX_VALUE));
 
     // Range on none existing key
     try {
