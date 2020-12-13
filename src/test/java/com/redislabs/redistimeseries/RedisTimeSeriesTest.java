@@ -573,6 +573,20 @@ public class RedisTimeSeriesTest {
   }
 
   @Test
+  public void testStringHost() {
+    try (RedisTimeSeries rts = new RedisTimeSeries("localhost")) {
+      Assert.assertEquals(2100, rts.add("stringConnection", 2100, 2.1));
+    }
+  }
+
+  @Test
+  public void testStringURI() {
+    try (RedisTimeSeries rts = new RedisTimeSeries("redis://default:@localhost:6379/0")) {
+      Assert.assertEquals(2200, rts.add("uriConnection", 2200, 2.2));
+    }
+  }
+
+  @Test
   public void testCloseable() {
     JedisPool closeablePool = new JedisPool();
     try (RedisTimeSeries closeableClient = new RedisTimeSeries(closeablePool)) {
