@@ -299,7 +299,7 @@ public class RedisTimeSeries implements AutoCloseable {
    */
   public long add(String sourceKey, double value) {
     try (Jedis conn = getConnection()) {
-      byte[][] args = tsAddArgs(sourceKey, null, value, null, false, null);
+      byte[][] args = tsAddArgs(sourceKey, null, value, null, false, null, null, null);
       return sendCommand(conn, Command.ADD, args).getIntegerReply();
     }
   }
@@ -314,7 +314,7 @@ public class RedisTimeSeries implements AutoCloseable {
    */
   public long add(String sourceKey, long timestamp, double value) {
     try (Jedis conn = getConnection()) {
-      byte[][] args = tsAddArgs(sourceKey, timestamp, value, null, false, null);
+      byte[][] args = tsAddArgs(sourceKey, timestamp, value, null, false, null, null, null);
       return sendCommand(conn, Command.ADD, args).getIntegerReply();
     }
   }
@@ -342,7 +342,7 @@ public class RedisTimeSeries implements AutoCloseable {
    */
   public long add(String sourceKey, double value, long retentionTime) {
     try (Jedis conn = getConnection()) {
-      byte[][] args = tsAddArgs(sourceKey, null, value, retentionTime, false, null);
+      byte[][] args = tsAddArgs(sourceKey, null, value, retentionTime, false, null, null, null);
       return sendCommand(conn, Command.ADD, args).getIntegerReply();
     }
   }
@@ -358,7 +358,7 @@ public class RedisTimeSeries implements AutoCloseable {
    */
   public long add(String sourceKey, long timestamp, double value, Map<String, String> labels) {
     try (Jedis conn = getConnection()) {
-      byte[][] args = tsAddArgs(sourceKey, timestamp, value, null, false, labels);
+      byte[][] args = tsAddArgs(sourceKey, timestamp, value, null, false, null, null, labels);
       return sendCommand(conn, Command.ADD, args).getIntegerReply();
     }
   }
@@ -380,7 +380,8 @@ public class RedisTimeSeries implements AutoCloseable {
       long retentionTime,
       Map<String, String> labels) {
     try (Jedis conn = getConnection()) {
-      byte[][] args = tsAddArgs(sourceKey, timestamp, value, retentionTime, false, labels);
+      byte[][] args =
+          tsAddArgs(sourceKey, timestamp, value, retentionTime, false, null, null, labels);
       return sendCommand(conn, Command.ADD, args).getIntegerReply();
     }
   }
@@ -404,7 +405,46 @@ public class RedisTimeSeries implements AutoCloseable {
       boolean uncompressed,
       Map<String, String> labels) {
     try (Jedis conn = getConnection()) {
-      byte[][] args = tsAddArgs(sourceKey, timestamp, value, retentionTime, uncompressed, labels);
+      byte[][] args =
+          tsAddArgs(sourceKey, timestamp, value, retentionTime, uncompressed, null, null, labels);
+      return sendCommand(conn, Command.ADD, args).getIntegerReply();
+    }
+  }
+
+  /**
+   * TS.ADD key timestamp value [RETENTION retentionTime] UNCOMPRESSED [CHUNK_SIZE size]
+   * [ON_DUPLICATE policy] [LABELS label value..]
+   *
+   * @param sourceKey
+   * @param timestamp
+   * @param value
+   * @param retentionTime
+   * @param chunkSize
+   * @param duplicatePolicy
+   * @param uncompressed
+   * @param labels
+   * @return
+   */
+  public long add(
+      String sourceKey,
+      long timestamp,
+      double value,
+      long retentionTime,
+      boolean uncompressed,
+      long chunkSize,
+      DuplicatePolicy duplicatePolicy,
+      Map<String, String> labels) {
+    try (Jedis conn = getConnection()) {
+      byte[][] args =
+          tsAddArgs(
+              sourceKey,
+              timestamp,
+              value,
+              retentionTime,
+              uncompressed,
+              chunkSize,
+              duplicatePolicy,
+              labels);
       return sendCommand(conn, Command.ADD, args).getIntegerReply();
     }
   }
@@ -415,25 +455,37 @@ public class RedisTimeSeries implements AutoCloseable {
       double value,
       Long retentionTime,
       boolean uncompressed,
+      Long chunkSize,
+      DuplicatePolicy duplicatePolicy,
       Map<String, String> labels) {
     byte[][] args =
         new byte
             [3
                 + (retentionTime != null ? 2 : 0)
-                + (labels == null ? 0 : 2 * labels.size() + 1)
-                + (uncompressed ? 1 : 0)]
+                + (uncompressed ? 1 : 0)
+                + (chunkSize != null ? 2 : 0)
+                + (duplicatePolicy != null ? 2 : 0)
+                + (labels == null ? 0 : 2 * labels.size() + 1)]
             [];
     int i = 0;
 
     args[i++] = SafeEncoder.encode(sourceKey);
-    args[i++] = timestamp != null ? Protocol.toByteArray(timestamp.longValue()) : STAR;
+    args[i++] = timestamp != null ? Protocol.toByteArray(timestamp) : STAR;
     args[i++] = Protocol.toByteArray(value);
     if (retentionTime != null) {
       args[i++] = Keyword.RETENTION.getRaw();
-      args[i++] = Protocol.toByteArray(retentionTime.longValue());
+      args[i++] = Protocol.toByteArray(retentionTime);
     }
     if (uncompressed) {
       args[i++] = Keyword.UNCOMPRESSED.getRaw();
+    }
+    if (chunkSize != null) {
+      args[i++] = Keyword.CHUNK_SIZE.getRaw();
+      args[i++] = Protocol.toByteArray(chunkSize);
+    }
+    if (duplicatePolicy != null) {
+      args[i++] = Keyword.ON_DUPLICATE.getRaw();
+      args[i++] = duplicatePolicy.getRaw();
     }
     if (labels != null) {
       args[i++] = Keyword.LABELS.getRaw();
