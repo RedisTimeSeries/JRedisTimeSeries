@@ -57,12 +57,12 @@ and
    Map<String, String> labels = new HashMap<>();
    labels.put("country", "US");
    labels.put("cores", "8"); 
-   rts.create("cpu1", 60*10 /*10min*/, 100, labels);
+   rts.create("cpu1", 60*10 /*10min*/, labels);
    
-   rts.create("cpu1-avg", 60*10 /*10min*/, 100, null);
+   rts.create("cpu1-avg", 60*10 /*10min*/, null);
    rts.createRule("cpu1", Aggregation.AVG, 60 /*1min*/, "cpu1-avg");
    
-   rts.add("cpu1", System.currentTimeMillis()/1000 /* time sec */, 80);
+   rts.add("cpu1", System.currentTimeMillis()/1000 /* time sec */, 80.0);
    
    // Get all the timeseries in US in the last 10min average per min  
    rts.mrange(System.currentTimeMillis()/1000 - 10*60, System.currentTimeMillis()/1000, Aggregation.AVG, 60, "country=US")
