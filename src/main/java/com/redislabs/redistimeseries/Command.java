@@ -3,30 +3,31 @@ package com.redislabs.redistimeseries;
 import redis.clients.jedis.commands.ProtocolCommand;
 import redis.clients.jedis.util.SafeEncoder;
 
-public enum Command implements ProtocolCommand{
+public enum Command implements ProtocolCommand {
+  CREATE("TS.CREATE"),
+  RANGE("TS.RANGE"),
+  REVRANGE("TS.REVRANGE"),
+  MRANGE("TS.MRANGE"),
+  MREVRANGE("TS.MREVRANGE"),
+  CREATE_RULE("TS.CREATERULE"),
+  DELETE_RULE("TS.DELETERULE"),
+  ADD("TS.ADD"),
+  MADD("TS.MADD"),
+  INCRBY("TS.INCRBY"),
+  DECRBY("TS.DECRBY"),
+  INFO("TS.INFO"),
+  GET("TS.GET"),
+  MGET("TS.MGET"),
+  ALTER("TS.ALTER"),
+  QUERYINDEX("TS.QUERYINDEX");
 
-    CREATE("TS.CREATE"),
-    RANGE("TS.RANGE"),
-    MRANGE("TS.MRANGE"),
-    CREATE_RULE("TS.CREATERULE"),
-    DELETE_RULE("TS.DELETERULE"),
-    ADD("TS.ADD"),
-    MADD("TS.MADD"),
-    INCRBY("TS.INCRBY"),
-    DECRBY("TS.DECRBY"),
-    INFO("TS.INFO"),
-    GET("TS.GET"),
-    MGET("TS.MGET"),
-    ALTER("TS.ALTER"),
-    QUERYINDEX("TS.QUERYINDEX");
-    
-    private final byte[] raw;
+  private final byte[] raw;
 
-    Command(String alt) {
-        raw = SafeEncoder.encode(alt);
-    }
+  Command(String alt) {
+    raw = SafeEncoder.encode(alt);
+  }
 
-    public byte[] getRaw() {
-        return raw;
-    }
+  public byte[] getRaw() {
+    return raw;
+  }
 }
