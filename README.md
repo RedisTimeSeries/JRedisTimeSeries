@@ -9,7 +9,7 @@
 
 # JRedisTimeSeries
 [![Forum](https://img.shields.io/badge/Forum-RedisTimeSeries-blue)](https://forum.redislabs.com/c/modules/redistimeseries)
-[![Gitter](https://badges.gitter.im/RedisLabs/RedisTimeSeries.svg)](https://gitter.im/RedisLabs/RedisTimeSeries?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
+[![Discord](https://img.shields.io/discord/697882427875393627?style=flat-square)](https://discord.gg/KExRgMb)
 
 Java Client for RedisTimeSeries
 
@@ -20,7 +20,7 @@ Java Client for RedisTimeSeries
     <dependency>
       <groupId>com.redislabs</groupId>
       <artifactId>jredistimeseries</artifactId>
-      <version>1.3.0</version>
+      <version>1.4.0</version>
     </dependency>
   </dependencies>
 ```
@@ -43,7 +43,7 @@ and
     <dependency>
       <groupId>com.redislabs</groupId>
       <artifactId>jredistimeseries</artifactId>
-      <version>1.4.0-SNAPSHOT</version>
+      <version>1.5.0-SNAPSHOT</version>
     </dependency>
   </dependencies>
 ```
@@ -57,12 +57,12 @@ and
    Map<String, String> labels = new HashMap<>();
    labels.put("country", "US");
    labels.put("cores", "8"); 
-   rts.create("cpu1", 60*10 /*10min*/, 100, labels);
+   rts.create("cpu1", 60*10 /*10min*/, labels);
    
-   rts.create("cpu1-avg", 60*10 /*10min*/, 100, null);
+   rts.create("cpu1-avg", 60*10 /*10min*/, null);
    rts.createRule("cpu1", Aggregation.AVG, 60 /*1min*/, "cpu1-avg");
    
-   rts.add("cpu1", System.currentTimeMillis()/1000 /* time sec */, 80);
+   rts.add("cpu1", System.currentTimeMillis()/1000 /* time sec */, 80.0);
    
    // Get all the timeseries in US in the last 10min average per min  
    rts.mrange(System.currentTimeMillis()/1000 - 10*60, System.currentTimeMillis()/1000, Aggregation.AVG, 60, "country=US")
