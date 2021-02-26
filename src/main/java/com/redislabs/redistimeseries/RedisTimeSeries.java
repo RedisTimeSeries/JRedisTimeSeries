@@ -130,7 +130,7 @@ public class RedisTimeSeries implements AutoCloseable {
   }
 
   /**
-   * TS.CREATE key [RETENTION retentionTime] [UNCOMPRESSED] [CHUNK_SIZE size] [ON_DUPLICATE policy]
+   * TS.CREATE key [RETENTION retentionTime] [UNCOMPRESSED] [CHUNK_SIZE size] [DUPLICATE_POLICY policy]
    * [LABELS label value..]
    *
    * @param key
