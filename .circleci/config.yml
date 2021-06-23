@@ -52,6 +52,8 @@ jobs:
 
       - run: bash <(curl -s https://codecov.io/bash) -t ${CODECOV_TOKEN}
 
+      - run: mvn -s  .circleci.settings.xml -DskipTests deploy
+
   nightly_build:
     docker:
       - image: circleci/openjdk:8u171-jdk
