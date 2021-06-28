@@ -52,7 +52,7 @@ jobs:
 
       - run: bash <(curl -s https://codecov.io/bash) -t ${CODECOV_TOKEN}
 
-      - run: mvn -s  .circleci.settings.xml -DskipTests deploy
+      - run: mvn -s  .circleci.settings.xml -DskipTests -Dgpg.skip deploy
 
   nightly_build:
     docker:
