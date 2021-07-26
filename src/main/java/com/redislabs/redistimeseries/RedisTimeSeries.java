@@ -519,6 +519,120 @@ public class RedisTimeSeries implements AutoCloseable {
   }
 
   /**
+   * TS.ADD key timestamp value [RETENTION retentionTime] [UNCOMPRESSED] [CHUNK_SIZE size]
+   * [ON_DUPLICATE policy] [LABELS label value..]
+   *
+   * @param sourceKey
+   * @param timestamp
+   * @param value
+   * @param addParams
+   * @return
+   */
+  public long addV2(String sourceKey, long timestamp, double value, AddParams addParams) {
+    try (Jedis conn = getConnection()) {
+      return sendCommand(conn, Command.ADD, addParams.getByteParams(sourceKey, timestamp, value))
+          .getIntegerReply();
+    }
+  }
+
+  /**
+   * TS.RANGE key fromTimestamp toTimestamp [COUNT count] [AGGREGATION aggregationType timeBucket]
+   *
+   * @param key
+   * @param from
+   * @param to
+   * @param rangeParams
+   * @return
+   */
+  public List<Value> range(String key, long from, long to, RangeParams rangeParams) {
+    try (Jedis conn = getConnection()) {
+      Object obj =
+          sendCommand(conn, Command.RANGE, rangeParams.getByteParams(key, from, to)).getOne();
+      return Value.VALUE_LIST.build(obj);
+    }
+  }
+
+  /**
+   * TS.REVRANGE key fromTimestamp toTimestamp [COUNT count] [AGGREGATION aggregationType
+   * timeBucket]
+   *
+   * @param key
+   * @param from
+   * @param to
+   * @param rangeParams
+   * @return
+   */
+  public List<Value> revrange(String key, long from, long to, RangeParams rangeParams) {
+    try (Jedis conn = getConnection()) {
+      Object obj =
+          sendCommand(conn, Command.REVRANGE, rangeParams.getByteParams(key, from, to)).getOne();
+      return Value.VALUE_LIST.build(obj);
+    }
+  }
+
+  /**
+   * TS.MRANGE fromTimestamp toTimestamp [COUNT count] [AGGREGATION aggregationType timeBucket]
+   * [WITHLABELS] FILTER filter...
+   *
+   * @param from
+   * @param to
+   * @param multiRangeParams
+   * @return
+   */
+  public List<RangeV2> mrange(long from, long to, MultiRangeParams multiRangeParams) {
+    try (Jedis conn = getConnection()) {
+      Object obj =
+          sendCommand(conn, Command.MRANGE, multiRangeParams.getByteParams(from, to)).getOne();
+      return RangeV2.RANGE_LIST.build(obj);
+    }
+  }
+
+  /**
+   * TS.MREVRANGE fromTimestamp toTimestamp [COUNT count] [AGGREGATION aggregationType timeBucket]
+   * [WITHLABELS] FILTER filter...
+   *
+   * @param from
+   * @param to
+   * @param multiRangeParams
+   * @return
+   */
+  public List<RangeV2> mrevrange(long from, long to, MultiRangeParams multiRangeParams) {
+    try (Jedis conn = getConnection()) {
+      Object obj =
+          sendCommand(conn, Command.MREVRANGE, multiRangeParams.getByteParams(from, to)).getOne();
+      return RangeV2.RANGE_LIST.build(obj);
+    }
+  }
+
+  /**
+   * TS.MGET [WITHLABELS] FILTER filter...
+   *
+   * @param withLabels
+   * @param filters
+   * @return
+   */
+  public List<MValue> mgetV2(boolean withLabels, String... filters) {
+    try (Jedis conn = getConnection()) {
+      byte[][] args = new byte[1 + (withLabels ? 1 : 0) + (filters == null ? 0 : filters.length)][];
+      int i = 0;
+
+      if (withLabels) {
+        args[i++] = Keyword.WITHLABELS.getRaw();
+      }
+
+      args[i++] = Keyword.FILTER.getRaw();
+      if (filters != null) {
+        for (String label : filters) {
+          args[i++] = SafeEncoder.encode(label);
+        }
+      }
+
+      Object result = sendCommand(conn, Command.MGET, args).getOne();
+      return MValue.MVALUE_LIST.build(result);
+    }
+  }
+
+  /**
    * @param command Should be {@link Command#RANGE} or {@link Command#REVRANGE}
    * @param args
    * @return
