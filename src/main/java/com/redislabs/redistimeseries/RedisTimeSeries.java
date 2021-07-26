@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import redis.clients.jedis.BinaryClient;
+import redis.clients.jedis.Client;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
 import redis.clients.jedis.JedisPoolConfig;
@@ -198,6 +199,22 @@ public class RedisTimeSeries implements AutoCloseable {
       }
     }
     return args;
+  }
+
+  /**
+   * TS.DEL key fromTimestamp toTimestamp
+   *
+   * @param key
+   * @param from timestamp from
+   * @param to timestamp to
+   * @return
+   */
+  public boolean del(String key, long from, long to) {
+    try (Jedis conn = getConnection()) {
+      return sendCommand(conn, Command.DEL, key, Long.toString(from), Long.toString(to))
+          .getStatusCodeReply()
+          .equals("OK");
+    }
   }
 
   /**
@@ -1066,6 +1083,12 @@ public class RedisTimeSeries implements AutoCloseable {
 
   private BinaryClient sendCommand(Jedis conn, Command command, byte[]... args) {
     BinaryClient client = conn.getClient();
+    client.sendCommand(command, args);
+    return client;
+  }
+
+  private Client sendCommand(Jedis conn, Command command, String... args) {
+    Client client = conn.getClient();
     client.sendCommand(command, args);
     return client;
   }
