@@ -1,5 +1,9 @@
 package com.redislabs.redistimeseries;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
 import com.redislabs.redistimeseries.information.Info;
 import com.redislabs.redistimeseries.information.Rule;
 import java.util.*;
@@ -280,6 +284,30 @@ public class RedisTimeSeriesTest {
       Assert.fail();
     } catch (JedisDataException e) {
     }
+  }
+
+  @Test
+  public void del() {
+    try {
+      client.del("ts-del", 0, 1);
+      fail();
+    } catch (JedisDataException jde) {
+      // expected
+    }
+
+    assertTrue(client.create("ts-del", 10000L));
+    assertTrue(client.del("ts-del", 0, 1));
+
+    assertEquals(1000L, client.add("ts-del", 1000L, 1.1, 10000, null));
+    assertEquals(2000L, client.add("ts-del", 2000L, 0.9, null));
+    assertEquals(3200L, client.add("ts-del", 3200L, 1.1, 10000));
+    assertEquals(4500L, client.add("ts-del", 4500L, -1.1));
+    Assert.assertEquals(4, client.range("ts-del", 0, 5000).length);
+
+    assertTrue(client.del("ts-del", 2000, 4000));
+    Assert.assertEquals(2, client.range("ts-del", 0, 5000).length);
+    Assert.assertEquals(1, client.range("ts-del", 0, 2500).length);
+    Assert.assertEquals(1, client.range("ts-del", 2500, 5000).length);
   }
 
   @Test

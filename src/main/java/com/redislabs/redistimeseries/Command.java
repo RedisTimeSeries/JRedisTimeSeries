@@ -13,6 +13,7 @@ public enum Command implements ProtocolCommand {
   DELETE_RULE("TS.DELETERULE"),
   ADD("TS.ADD"),
   MADD("TS.MADD"),
+  DEL("TS.DEL"),
   INCRBY("TS.INCRBY"),
   DECRBY("TS.DECRBY"),
   INFO("TS.INFO"),
@@ -27,6 +28,7 @@ public enum Command implements ProtocolCommand {
     raw = SafeEncoder.encode(alt);
   }
 
+  @Override
   public byte[] getRaw() {
     return raw;
   }
