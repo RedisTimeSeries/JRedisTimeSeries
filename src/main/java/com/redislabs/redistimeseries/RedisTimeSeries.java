@@ -1,6 +1,7 @@
 package com.redislabs.redistimeseries;
 
 import com.redislabs.redistimeseries.information.Info;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -211,7 +212,10 @@ public class RedisTimeSeries implements AutoCloseable {
    */
   public boolean create(String key, CreateParams createParams) {
     try (Jedis conn = getConnection()) {
-      return sendCommand(conn, Command.CREATE, createParams.getCreateByteParams(key))
+      List<byte[]> params = new ArrayList<>();
+      params.add(SafeEncoder.encode(key));
+      createParams.addOptionalParams(params);
+      return sendCommand(conn, Command.CREATE, params.toArray(new byte[params.size()][]))
           .getStatusCodeReply()
           .equals("OK");
     }
@@ -541,7 +545,13 @@ public class RedisTimeSeries implements AutoCloseable {
    */
   public long add(String sourceKey, double value, CreateParams createParams) {
     try (Jedis conn = getConnection()) {
-      return sendCommand(conn, Command.ADD, createParams.getAddByteParams(sourceKey, null, value))
+      List<byte[]> params = new ArrayList<>();
+      params.add(SafeEncoder.encode(sourceKey));
+      params.add(Protocol.BYTES_ASTERISK);
+      params.add(Protocol.toByteArray(value));
+
+      createParams.addOptionalParams(params);
+      return sendCommand(conn, Command.ADD, params.toArray(new byte[params.size()][]))
           .getIntegerReply();
     }
   }
@@ -558,7 +568,13 @@ public class RedisTimeSeries implements AutoCloseable {
    */
   public long add(String sourceKey, long timestamp, double value, CreateParams addParams) {
     try (Jedis conn = getConnection()) {
-      return sendCommand(conn, Command.ADD, addParams.getAddByteParams(sourceKey, timestamp, value))
+      List<byte[]> params = new ArrayList<>();
+      params.add(SafeEncoder.encode(sourceKey));
+      params.add(Protocol.toByteArray(timestamp));
+      params.add(Protocol.toByteArray(value));
+
+      addParams.addOptionalParams(params);
+      return sendCommand(conn, Command.ADD, params.toArray(new byte[params.size()][]))
           .getIntegerReply();
     }
   }

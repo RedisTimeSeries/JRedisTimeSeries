@@ -1,6 +1,5 @@
 package com.redislabs.redistimeseries;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import redis.clients.jedis.Protocol;
@@ -45,29 +44,7 @@ public class CreateParams {
     return this;
   }
 
-  public byte[][] getCreateByteParams(String key) {
-    List<byte[]> params = new ArrayList<>();
-    params.add(SafeEncoder.encode(key));
-
-    addOptionalParams(params);
-    return params.toArray(new byte[params.size()][]);
-  }
-
-  public byte[][] getAddByteParams(String key, Long timestamp, double value) {
-    List<byte[]> params = new ArrayList<>();
-    params.add(SafeEncoder.encode(key));
-    if (timestamp != null) {
-      params.add(Protocol.toByteArray(timestamp));
-    } else {
-      params.add(Protocol.BYTES_ASTERISK);
-    }
-    params.add(Protocol.toByteArray(value));
-
-    addOptionalParams(params);
-    return params.toArray(new byte[params.size()][]);
-  }
-
-  private void addOptionalParams(List<byte[]> params) {
+  public void addOptionalParams(List<byte[]> params) {
     if (retentionTime != null) {
       params.add(Keyword.RETENTION.getRaw());
       params.add(Protocol.toByteArray(retentionTime));
