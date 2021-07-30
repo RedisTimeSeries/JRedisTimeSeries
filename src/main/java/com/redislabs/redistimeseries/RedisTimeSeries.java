@@ -229,11 +229,10 @@ public class RedisTimeSeries implements AutoCloseable {
    * @param to timestamp to
    * @return
    */
-  public boolean del(String key, long from, long to) {
+  public long del(String key, long from, long to) {
     try (Jedis conn = getConnection()) {
       return sendCommand(conn, Command.DEL, key, Long.toString(from), Long.toString(to))
-          .getStatusCodeReply()
-          .equals("OK");
+          .getIntegerReply();
     }
   }
 
