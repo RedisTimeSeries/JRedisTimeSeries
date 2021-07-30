@@ -296,7 +296,7 @@ public class RedisTimeSeriesTest {
     }
 
     assertTrue(client.create("ts-del", 10000L));
-    assertTrue(client.del("ts-del", 0, 1));
+    assertEquals(0, client.del("ts-del", 0, 1));
 
     assertEquals(1000L, client.add("ts-del", 1000L, 1.1, 10000));
     assertEquals(2000L, client.add("ts-del", 2000L, 0.9));
@@ -304,7 +304,7 @@ public class RedisTimeSeriesTest {
     assertEquals(4500L, client.add("ts-del", 4500L, -1.1));
     Assert.assertEquals(4, client.range("ts-del", 0, 5000).length);
 
-    assertTrue(client.del("ts-del", 2000, 4000));
+    assertEquals(2, client.del("ts-del", 2000, 4000));
     Assert.assertEquals(2, client.range("ts-del", 0, 5000).length);
     Assert.assertEquals(1, client.range("ts-del", 0, 2500).length);
     Assert.assertEquals(1, client.range("ts-del", 2500, 5000).length);
