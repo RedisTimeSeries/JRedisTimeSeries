@@ -410,6 +410,61 @@ public class RedisTimeSeriesTest {
   }
 
   @Test
+  public void rangeFilterBy() {
+
+    Value[] rawValues =
+        new Value[] {
+          new Value(1000L, 1.0),
+          new Value(2000L, 0.9),
+          new Value(3200L, 1.1),
+          new Value(4500L, -1.1)
+        };
+
+    for (Value value : rawValues) {
+      client.add("filterBy", value.getTime(), value.getValue());
+    }
+
+    // RANGE
+    Value[] values = client.range("filterBy", 0, 5000, RangeParams.rangeParams());
+    Assert.assertArrayEquals(rawValues, values);
+
+    values = client.range("filterBy", 0, 5000, RangeParams.rangeParams().filterByTS(1000L, 2000L));
+    Assert.assertArrayEquals(new Value[] {rawValues[0], rawValues[1]}, values);
+
+    values = client.range("filterBy", 0, 5000, RangeParams.rangeParams().filterByValues(1.0, 1.2));
+    Assert.assertArrayEquals(new Value[] {rawValues[0], rawValues[2]}, values);
+
+    values =
+        client.range(
+            "filterBy",
+            0,
+            5000,
+            RangeParams.rangeParams().filterByTS(1000L, 2000L).filterByValues(1.0, 1.2));
+    Assert.assertArrayEquals(new Value[] {rawValues[0]}, values);
+
+    // REVRANGE
+    values = client.revrange("filterBy", 0, 5000, RangeParams.rangeParams());
+    Assert.assertArrayEquals(
+        new Value[] {rawValues[3], rawValues[2], rawValues[1], rawValues[0]}, values);
+
+    values =
+        client.revrange("filterBy", 0, 5000, RangeParams.rangeParams().filterByTS(1000L, 2000L));
+    Assert.assertArrayEquals(new Value[] {rawValues[1], rawValues[0]}, values);
+
+    values =
+        client.revrange("filterBy", 0, 5000, RangeParams.rangeParams().filterByValues(1.0, 1.2));
+    Assert.assertArrayEquals(new Value[] {rawValues[2], rawValues[0]}, values);
+
+    values =
+        client.revrange(
+            "filterBy",
+            0,
+            5000,
+            RangeParams.rangeParams().filterByTS(1000L, 2000L).filterByValues(1.0, 1.2));
+    Assert.assertArrayEquals(new Value[] {rawValues[0]}, values);
+  }
+
+  @Test
   public void testGet() {
 
     // Test for empty result none existing series
