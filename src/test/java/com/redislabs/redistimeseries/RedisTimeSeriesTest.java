@@ -1,5 +1,6 @@
 package com.redislabs.redistimeseries;
 
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -462,6 +463,88 @@ public class RedisTimeSeriesTest {
             5000,
             RangeParams.rangeParams().filterByTS(1000L, 2000L).filterByValues(1.0, 1.2));
     Assert.assertArrayEquals(new Value[] {rawValues[0]}, values);
+  }
+
+  @Test
+  public void mrangeFilterBy() {
+
+    Map<String, String> labels = Collections.singletonMap("label", "multi");
+    String filter = "label=multi";
+
+    Value[] rawValues =
+        new Value[] {
+          new Value(1000L, 1.0),
+          new Value(2000L, 0.9),
+          new Value(3200L, 1.1),
+          new Value(4500L, -1.1)
+        };
+
+    client.add("ts1", rawValues[0].getTime(), rawValues[0].getValue(), labels);
+    client.add("ts2", rawValues[1].getTime(), rawValues[1].getValue(), labels);
+    client.add("ts2", rawValues[2].getTime(), rawValues[2].getValue(), labels);
+    client.add("ts1", rawValues[3].getTime(), rawValues[3].getValue(), labels);
+
+    // MRANGE
+    Range[] range = client.mrange(0, 5000, MultiRangeParams.multiRangeParams(), filter);
+    assertEquals("ts1", range[0].getKey());
+    assertArrayEquals(new Value[] {rawValues[0], rawValues[3]}, range[0].getValues());
+    assertEquals("ts2", range[1].getKey());
+    assertArrayEquals(new Value[] {rawValues[1], rawValues[2]}, range[1].getValues());
+
+    range =
+        client.mrange(
+            0, 5000, MultiRangeParams.multiRangeParams().filterByTS(1000L, 2000L), filter);
+    assertEquals("ts1", range[0].getKey());
+    assertArrayEquals(new Value[] {rawValues[0]}, range[0].getValues());
+    assertEquals("ts2", range[1].getKey());
+    assertArrayEquals(new Value[] {rawValues[1]}, range[1].getValues());
+
+    range =
+        client.mrange(
+            0, 5000, MultiRangeParams.multiRangeParams().filterByValues(1.0, 1.2), filter);
+    assertEquals("ts1", range[0].getKey());
+    assertArrayEquals(new Value[] {rawValues[0]}, range[0].getValues());
+    assertEquals("ts2", range[1].getKey());
+    assertArrayEquals(new Value[] {rawValues[2]}, range[1].getValues());
+
+    range =
+        client.mrange(
+            0,
+            5000,
+            MultiRangeParams.multiRangeParams().filterByTS(1000L, 2000L).filterByValues(1.0, 1.2),
+            filter);
+    assertArrayEquals(new Value[] {rawValues[0]}, range[0].getValues());
+
+    // MREVRANGE
+    range = client.mrevrange(0, 5000, MultiRangeParams.multiRangeParams(), filter);
+    assertEquals("ts1", range[0].getKey());
+    assertArrayEquals(new Value[] {rawValues[3], rawValues[0]}, range[0].getValues());
+    assertEquals("ts2", range[1].getKey());
+    assertArrayEquals(new Value[] {rawValues[2], rawValues[1]}, range[1].getValues());
+
+    range =
+        client.mrevrange(
+            0, 5000, MultiRangeParams.multiRangeParams().filterByTS(1000L, 2000L), filter);
+    assertEquals("ts1", range[0].getKey());
+    assertArrayEquals(new Value[] {rawValues[0]}, range[0].getValues());
+    assertEquals("ts2", range[1].getKey());
+    assertArrayEquals(new Value[] {rawValues[1]}, range[1].getValues());
+
+    range =
+        client.mrevrange(
+            0, 5000, MultiRangeParams.multiRangeParams().filterByValues(1.0, 1.2), filter);
+    assertEquals("ts1", range[0].getKey());
+    assertArrayEquals(new Value[] {rawValues[0]}, range[0].getValues());
+    assertEquals("ts2", range[1].getKey());
+    assertArrayEquals(new Value[] {rawValues[2]}, range[1].getValues());
+
+    range =
+        client.mrevrange(
+            0,
+            5000,
+            MultiRangeParams.multiRangeParams().filterByTS(1000L, 2000L).filterByValues(1.0, 1.2),
+            filter);
+    assertArrayEquals(new Value[] {rawValues[0]}, range[0].getValues());
   }
 
   @Test
