@@ -1,10 +1,12 @@
 package com.redislabs.redistimeseries;
 
 import com.redislabs.redistimeseries.information.Info;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import redis.clients.jedis.BinaryClient;
+import redis.clients.jedis.Client;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
 import redis.clients.jedis.JedisPoolConfig;
@@ -198,6 +200,40 @@ public class RedisTimeSeries implements AutoCloseable {
       }
     }
     return args;
+  }
+
+  /**
+   * TS.CREATE key [RETENTION retentionTime] [UNCOMPRESSED] [CHUNK_SIZE size] [DUPLICATE_POLICY
+   * policy] [LABELS label value..]
+   *
+   * @param key
+   * @param createParams
+   * @return
+   */
+  public boolean create(String key, CreateParams createParams) {
+    try (Jedis conn = getConnection()) {
+      List<byte[]> params = new ArrayList<>();
+      params.add(SafeEncoder.encode(key));
+      createParams.addOptionalParams(params);
+      return sendCommand(conn, Command.CREATE, params.toArray(new byte[params.size()][]))
+          .getStatusCodeReply()
+          .equals("OK");
+    }
+  }
+
+  /**
+   * TS.DEL key fromTimestamp toTimestamp
+   *
+   * @param key
+   * @param from timestamp from
+   * @param to timestamp to
+   * @return
+   */
+  public long del(String key, long from, long to) {
+    try (Jedis conn = getConnection()) {
+      return sendCommand(conn, Command.DEL, key, Long.toString(from), Long.toString(to))
+          .getIntegerReply();
+    }
   }
 
   /**
@@ -498,6 +534,51 @@ public class RedisTimeSeries implements AutoCloseable {
   }
 
   /**
+   * TS.ADD key timestamp value [RETENTION retentionTime] [UNCOMPRESSED] [CHUNK_SIZE size]
+   * [ON_DUPLICATE policy] [LABELS label value..]
+   *
+   * @param sourceKey
+   * @param value
+   * @param createParams
+   * @return
+   */
+  public long add(String sourceKey, double value, CreateParams createParams) {
+    try (Jedis conn = getConnection()) {
+      List<byte[]> params = new ArrayList<>();
+      params.add(SafeEncoder.encode(sourceKey));
+      params.add(Protocol.BYTES_ASTERISK);
+      params.add(Protocol.toByteArray(value));
+
+      createParams.addOptionalParams(params);
+      return sendCommand(conn, Command.ADD, params.toArray(new byte[params.size()][]))
+          .getIntegerReply();
+    }
+  }
+
+  /**
+   * TS.ADD key timestamp value [RETENTION retentionTime] [UNCOMPRESSED] [CHUNK_SIZE size]
+   * [ON_DUPLICATE policy] [LABELS label value..]
+   *
+   * @param sourceKey
+   * @param timestamp
+   * @param value
+   * @param addParams
+   * @return
+   */
+  public long add(String sourceKey, long timestamp, double value, CreateParams addParams) {
+    try (Jedis conn = getConnection()) {
+      List<byte[]> params = new ArrayList<>();
+      params.add(SafeEncoder.encode(sourceKey));
+      params.add(Protocol.toByteArray(timestamp));
+      params.add(Protocol.toByteArray(value));
+
+      addParams.addOptionalParams(params);
+      return sendCommand(conn, Command.ADD, params.toArray(new byte[params.size()][]))
+          .getIntegerReply();
+    }
+  }
+
+  /**
    * TS.MADD key timestamp value [key timestamp value ...]
    *
    * @param measurements
@@ -608,6 +689,23 @@ public class RedisTimeSeries implements AutoCloseable {
   }
 
   /**
+   * TS.RANGE key fromTimestamp toTimestamp [COUNT count] [AGGREGATION aggregationType timeBucket]
+   *
+   * @param key
+   * @param from
+   * @param to
+   * @param rangeParams
+   * @return
+   */
+  public Value[] range(String key, long from, long to, RangeParams rangeParams) {
+    try (Jedis conn = getConnection()) {
+      Object obj =
+          sendCommand(conn, Command.RANGE, rangeParams.getByteParams(key, from, to)).getOne();
+      return Range.parseRange((List<Object>) obj);
+    }
+  }
+
+  /**
    * TS.REVRANGE key fromTimestamp toTimestamp
    *
    * @param key
@@ -688,6 +786,24 @@ public class RedisTimeSeries implements AutoCloseable {
         Protocol.toByteArray(timeBucket),
         Keyword.COUNT.getRaw(),
         Protocol.toByteArray(count));
+  }
+
+  /**
+   * TS.REVRANGE key fromTimestamp toTimestamp [COUNT count] [AGGREGATION aggregationType
+   * timeBucket]
+   *
+   * @param key
+   * @param from
+   * @param to
+   * @param rangeParams
+   * @return
+   */
+  public Value[] revrange(String key, long from, long to, RangeParams rangeParams) {
+    try (Jedis conn = getConnection()) {
+      Object obj =
+          sendCommand(conn, Command.REVRANGE, rangeParams.getByteParams(key, from, to)).getOne();
+      return Range.parseRange((List<Object>) obj);
+    }
   }
 
   /**
@@ -829,6 +945,25 @@ public class RedisTimeSeries implements AutoCloseable {
   }
 
   /**
+   * TS.MRANGE fromTimestamp toTimestamp [COUNT count] [AGGREGATION aggregationType timeBucket]
+   * [WITHLABELS] FILTER filter...
+   *
+   * @param from
+   * @param to
+   * @param multiRangeParams
+   * @param filters
+   * @return
+   */
+  public Range[] mrange(long from, long to, MultiRangeParams multiRangeParams, String... filters) {
+    try (Jedis conn = getConnection()) {
+      Object obj =
+          sendCommand(conn, Command.MRANGE, multiRangeParams.getByteParams(from, to, filters))
+              .getOne();
+      return Range.parseRanges((List<?>) obj);
+    }
+  }
+
+  /**
    * TS.MREVRANGE fromTimestamp toTimestamp FILTER filter. </br> Similar to calling <code>
    * mrevrange(from, to, null, 0, false, null, filters)</code>
    *
@@ -919,6 +1054,26 @@ public class RedisTimeSeries implements AutoCloseable {
       String... filters) {
     return multiRange(
         Command.MREVRANGE, from, to, aggregation, timeBucket, withLabels, count, filters);
+  }
+
+  /**
+   * TS.MREVRANGE fromTimestamp toTimestamp [COUNT count] [AGGREGATION aggregationType timeBucket]
+   * [WITHLABELS] FILTER filter...
+   *
+   * @param from
+   * @param to
+   * @param multiRangeParams
+   * @param filters
+   * @return
+   */
+  public Range[] mrevrange(
+      long from, long to, MultiRangeParams multiRangeParams, String... filters) {
+    try (Jedis conn = getConnection()) {
+      Object obj =
+          sendCommand(conn, Command.MREVRANGE, multiRangeParams.getByteParams(from, to, filters))
+              .getOne();
+      return Range.parseRanges((List<?>) obj);
+    }
   }
 
   /**
@@ -1066,6 +1221,12 @@ public class RedisTimeSeries implements AutoCloseable {
 
   private BinaryClient sendCommand(Jedis conn, Command command, byte[]... args) {
     BinaryClient client = conn.getClient();
+    client.sendCommand(command, args);
+    return client;
+  }
+
+  private Client sendCommand(Jedis conn, Command command, String... args) {
+    Client client = conn.getClient();
     client.sendCommand(command, args);
     return client;
   }

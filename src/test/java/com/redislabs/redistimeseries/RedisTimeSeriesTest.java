@@ -1,5 +1,9 @@
 package com.redislabs.redistimeseries;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
 import com.redislabs.redistimeseries.information.Info;
 import com.redislabs.redistimeseries.information.Rule;
 import java.util.*;
@@ -139,7 +143,7 @@ public class RedisTimeSeriesTest {
     Assert.assertTrue(client.create("seriesAdd", 10000L /*retentionTime*/, labels));
 
     Assert.assertEquals(1000L, client.add("seriesAdd", 1000L, 1.1, 10000, null));
-    Assert.assertEquals(2000L, client.add("seriesAdd", 2000L, 0.9, null));
+    Assert.assertEquals(2000L, client.add("seriesAdd", 2000L, 0.9, (Map<String, String>) null));
     Assert.assertEquals(3200L, client.add("seriesAdd", 3200L, 1.1, 10000));
     Assert.assertEquals(4500L, client.add("seriesAdd", 4500L, -1.1));
 
@@ -280,6 +284,30 @@ public class RedisTimeSeriesTest {
       Assert.fail();
     } catch (JedisDataException e) {
     }
+  }
+
+  @Test
+  public void del() {
+    try {
+      client.del("ts-del", 0, 1);
+      fail();
+    } catch (JedisDataException jde) {
+      // expected
+    }
+
+    assertTrue(client.create("ts-del", 10000L));
+    assertEquals(0, client.del("ts-del", 0, 1));
+
+    assertEquals(1000L, client.add("ts-del", 1000L, 1.1, 10000));
+    assertEquals(2000L, client.add("ts-del", 2000L, 0.9));
+    assertEquals(3200L, client.add("ts-del", 3200L, 1.1, 10000));
+    assertEquals(4500L, client.add("ts-del", 4500L, -1.1));
+    Assert.assertEquals(4, client.range("ts-del", 0, 5000).length);
+
+    assertEquals(2, client.del("ts-del", 2000, 4000));
+    Assert.assertEquals(2, client.range("ts-del", 0, 5000).length);
+    Assert.assertEquals(1, client.range("ts-del", 0, 2500).length);
+    Assert.assertEquals(1, client.range("ts-del", 2500, 5000).length);
   }
 
   @Test
@@ -524,7 +552,8 @@ public class RedisTimeSeriesTest {
     Assert.assertTrue(client.create("seriesAdd", 10000L /*retentionTime*/, labels));
 
     Assert.assertEquals(1000L, client.add("seriesRevRange", 1000L, 1.1, 10000, null));
-    Assert.assertEquals(2000L, client.add("seriesRevRange", 2000L, 0.9, null));
+    Assert.assertEquals(
+        2000L, client.add("seriesRevRange", 2000L, 0.9, (Map<String, String>) null));
     Assert.assertEquals(3200L, client.add("seriesRevRange", 3200L, 1.1, 10000));
     Assert.assertEquals(4500L, client.add("seriesRevRange", 4500L, -1.1));
 
