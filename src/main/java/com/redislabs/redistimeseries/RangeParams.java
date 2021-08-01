@@ -9,6 +9,8 @@ public class RangeParams {
 
   private Integer count;
 
+  private byte[] align;
+
   private Aggregation aggregationType;
   private long timeBucket;
 
@@ -19,6 +21,23 @@ public class RangeParams {
   public RangeParams count(int count) {
     this.count = count;
     return this;
+  }
+
+  private RangeParams align(byte[] raw) {
+    this.align = raw;
+    return this;
+  }
+
+  public RangeParams align(long timestamp) {
+    return align(Protocol.toByteArray(timestamp));
+  }
+
+  public RangeParams alignStart() {
+    return align("start".getBytes());
+  }
+
+  public RangeParams alignEnd() {
+    return align("end".getBytes());
   }
 
   public RangeParams aggregation(Aggregation aggregation, long timeBucket) {
@@ -36,6 +55,11 @@ public class RangeParams {
     if (count != null) {
       params.add(Keyword.COUNT.getRaw());
       params.add(Protocol.toByteArray(count));
+    }
+
+    if (align != null) {
+      params.add(Keyword.ALIGN.getRaw());
+      params.add(align);
     }
 
     if (aggregationType != null) {
