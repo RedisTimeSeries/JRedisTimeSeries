@@ -13,6 +13,7 @@ public class MultiRangeParams {
   private long timeBucket;
 
   private boolean withLabels;
+  private String[] selectedLabels;
 
   public static MultiRangeParams multiRangeParams() {
     return new MultiRangeParams();
@@ -41,6 +42,12 @@ public class MultiRangeParams {
     return this;
   }
 
+  /** WARNING: SELECTED_LABELS and WITHLABELS are mutually exclusive. */
+  public MultiRangeParams selectedLabels(String... labels) {
+    this.selectedLabels = labels;
+    return this;
+  }
+
   public byte[][] getByteParams(long from, long to, String... filters) {
     List<byte[]> params = new ArrayList<>();
     params.add(Protocol.toByteArray(from));
@@ -59,6 +66,11 @@ public class MultiRangeParams {
 
     if (withLabels) {
       params.add(Keyword.WITHLABELS.getRaw());
+    } else if (selectedLabels != null) {
+      params.add(Keyword.SELECTED_LABELS.getRaw());
+      for (String label : selectedLabels) {
+        params.add(SafeEncoder.encode(label));
+      }
     }
 
     params.add(Keyword.FILTER.getRaw());

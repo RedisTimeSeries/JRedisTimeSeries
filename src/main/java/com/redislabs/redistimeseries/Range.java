@@ -43,8 +43,10 @@ public class Range {
   private static Map<String, String> getLabelsStringStringMap(List<?> resLabels) {
     Map<String, String> rangeLabels = new HashMap<>(resLabels.size());
     for (Object resLabel : resLabels) {
-      List<byte[]> label = (List<byte[]>) resLabel;
-      rangeLabels.put(SafeEncoder.encode(label.get(0)), SafeEncoder.encode(label.get(1)));
+      List<byte[]> pair = (List<byte[]>) resLabel;
+      if (pair.get(0) != null && pair.get(1) != null) {
+        rangeLabels.put(SafeEncoder.encode(pair.get(0)), SafeEncoder.encode(pair.get(1)));
+      }
     }
     return rangeLabels;
   }

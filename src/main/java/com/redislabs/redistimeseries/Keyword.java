@@ -11,6 +11,7 @@ public enum Keyword implements ProtocolCommand {
   RETENTION,
   TIMESTAMP,
   WITHLABELS,
+  SELECTED_LABELS,
   COUNT,
   UNCOMPRESSED,
   CHUNK_SIZE,
