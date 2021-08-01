@@ -469,6 +469,8 @@ public class RedisTimeSeriesTest {
   public void mrangeFilterBy() {
 
     Map<String, String> labels = Collections.singletonMap("label", "multi");
+    client.create("ts1", labels);
+    client.create("ts2", labels);
     String filter = "label=multi";
 
     Value[] rawValues =
@@ -479,10 +481,10 @@ public class RedisTimeSeriesTest {
           new Value(4500L, -1.1)
         };
 
-    client.add("ts1", rawValues[0].getTime(), rawValues[0].getValue(), labels);
-    client.add("ts2", rawValues[1].getTime(), rawValues[1].getValue(), labels);
-    client.add("ts2", rawValues[2].getTime(), rawValues[2].getValue(), labels);
-    client.add("ts1", rawValues[3].getTime(), rawValues[3].getValue(), labels);
+    client.add("ts1", rawValues[0].getTime(), rawValues[0].getValue());
+    client.add("ts2", rawValues[1].getTime(), rawValues[1].getValue());
+    client.add("ts2", rawValues[2].getTime(), rawValues[2].getValue());
+    client.add("ts1", rawValues[3].getTime(), rawValues[3].getValue());
 
     // MRANGE
     Range[] range = client.mrange(0, 5000, MultiRangeParams.multiRangeParams(), filter);
