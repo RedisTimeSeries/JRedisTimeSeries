@@ -692,12 +692,12 @@ public class RedisTimeSeries implements AutoCloseable {
    * TS.RANGE key fromTimestamp toTimestamp [COUNT count] [AGGREGATION aggregationType timeBucket]
    *
    * @param key
-   * @param from
-   * @param to
+   * @param from timestamp. {@code null} represents {@code "-"}
+   * @param to timestamp. {@code null} represents {@code "+"}
    * @param rangeParams
    * @return
    */
-  public Value[] range(String key, long from, long to, RangeParams rangeParams) {
+  public Value[] range(String key, Long from, Long to, RangeParams rangeParams) {
     try (Jedis conn = getConnection()) {
       Object obj =
           sendCommand(conn, Command.RANGE, rangeParams.getByteParams(key, from, to)).getOne();
@@ -793,12 +793,12 @@ public class RedisTimeSeries implements AutoCloseable {
    * timeBucket]
    *
    * @param key
-   * @param from
-   * @param to
+   * @param from timestamp. {@code null} represents {@code "-"}
+   * @param to timestamp. {@code null} represents {@code "+"}
    * @param rangeParams
    * @return
    */
-  public Value[] revrange(String key, long from, long to, RangeParams rangeParams) {
+  public Value[] revrange(String key, Long from, Long to, RangeParams rangeParams) {
     try (Jedis conn = getConnection()) {
       Object obj =
           sendCommand(conn, Command.REVRANGE, rangeParams.getByteParams(key, from, to)).getOne();
@@ -948,13 +948,13 @@ public class RedisTimeSeries implements AutoCloseable {
    * TS.MRANGE fromTimestamp toTimestamp [COUNT count] [AGGREGATION aggregationType timeBucket]
    * [WITHLABELS] FILTER filter...
    *
-   * @param from
-   * @param to
+   * @param from timestamp. {@code null} represents {@code "-"}
+   * @param to timestamp. {@code null} represents {@code "+"}
    * @param multiRangeParams
    * @param filters
    * @return
    */
-  public Range[] mrange(long from, long to, MultiRangeParams multiRangeParams, String... filters) {
+  public Range[] mrange(Long from, Long to, MultiRangeParams multiRangeParams, String... filters) {
     try (Jedis conn = getConnection()) {
       Object obj =
           sendCommand(conn, Command.MRANGE, multiRangeParams.getByteParams(from, to, filters))
@@ -1060,14 +1060,14 @@ public class RedisTimeSeries implements AutoCloseable {
    * TS.MREVRANGE fromTimestamp toTimestamp [COUNT count] [AGGREGATION aggregationType timeBucket]
    * [WITHLABELS] FILTER filter...
    *
-   * @param from
-   * @param to
+   * @param from timestamp. {@code null} represents {@code "-"}
+   * @param to timestamp. {@code null} represents {@code "+"}
    * @param multiRangeParams
    * @param filters
    * @return
    */
   public Range[] mrevrange(
-      long from, long to, MultiRangeParams multiRangeParams, String... filters) {
+      Long from, Long to, MultiRangeParams multiRangeParams, String... filters) {
     try (Jedis conn = getConnection()) {
       Object obj =
           sendCommand(conn, Command.MREVRANGE, multiRangeParams.getByteParams(from, to, filters))
