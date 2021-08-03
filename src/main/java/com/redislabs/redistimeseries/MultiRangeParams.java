@@ -7,6 +7,9 @@ import redis.clients.jedis.util.SafeEncoder;
 
 public class MultiRangeParams {
 
+  private long[] filterByTimestamps;
+  private double[] filterByValues;
+
   private Integer count;
 
   private Aggregation aggregationType;
@@ -18,6 +21,16 @@ public class MultiRangeParams {
 
   public static MultiRangeParams multiRangeParams() {
     return new MultiRangeParams();
+  }
+
+  public MultiRangeParams filterByTS(long... timestamps) {
+    this.filterByTimestamps = timestamps;
+    return this;
+  }
+
+  public MultiRangeParams filterByValues(double min, double max) {
+    this.filterByValues = new double[] {min, max};
+    return this;
   }
 
   public MultiRangeParams count(int count) {
@@ -61,6 +74,20 @@ public class MultiRangeParams {
       params.add(RedisTimeSeries.PLUS);
     } else {
       params.add(Protocol.toByteArray(to));
+    }
+
+    if (filterByTimestamps != null) {
+      params.add(Keyword.FILTER_BY_TS.getRaw());
+      for (long ts : filterByTimestamps) {
+        params.add(Protocol.toByteArray(ts));
+      }
+    }
+
+    if (filterByValues != null) {
+      params.add(Keyword.FILTER_BY_VALUE.getRaw());
+      for (double value : filterByValues) {
+        params.add(Protocol.toByteArray(value));
+      }
     }
 
     if (count != null) {
