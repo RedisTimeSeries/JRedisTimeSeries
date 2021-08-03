@@ -436,7 +436,7 @@ public class RedisTimeSeriesTest {
     client.add("ts1", rawValues[3].getTime(), rawValues[3].getValue());
 
     Range[] range =
-        client.mrange(0, 5000, MultiRangeParams.multiRangeParams().withLabels(), "l1=v1");
+        client.mrange(0L, 5000L, MultiRangeParams.multiRangeParams().withLabels(), "l1=v1");
     assertEquals(2, range.length);
     assertEquals("ts1", range[0].getKey());
     assertEquals(2, range[0].getLabels().size());
@@ -445,7 +445,7 @@ public class RedisTimeSeriesTest {
 
     range =
         client.mrange(
-            0, 5000, MultiRangeParams.multiRangeParams().selectedLabels("l1", "l2"), "l1=v1");
+            0L, 5000L, MultiRangeParams.multiRangeParams().selectedLabels("l1", "l2"), "l1=v1");
     assertEquals(2, range.length);
     assertEquals("ts1", range[0].getKey());
     assertEquals(2, range[0].getLabels().size());
@@ -453,7 +453,7 @@ public class RedisTimeSeriesTest {
     assertEquals(1, range[1].getLabels().size());
 
     range =
-        client.mrange(0, 5000, MultiRangeParams.multiRangeParams().selectedLabels("l3"), "l2=v2");
+        client.mrange(0L, 5000L, MultiRangeParams.multiRangeParams().selectedLabels("l3"), "l2=v2");
     assertEquals(1, range.length);
     assertEquals(0, range[0].getLabels().size());
   }
