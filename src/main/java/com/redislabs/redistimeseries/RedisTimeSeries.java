@@ -17,6 +17,8 @@ import redis.clients.jedis.util.SafeEncoder;
 public class RedisTimeSeries implements AutoCloseable {
 
   private static final byte[] STAR = SafeEncoder.encode("*");
+  protected static final byte[] PLUS = SafeEncoder.encode("+");
+  protected static final byte[] MINUS = SafeEncoder.encode("-");
 
   private final Pool<Jedis> pool;
 

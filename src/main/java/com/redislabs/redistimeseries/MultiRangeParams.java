@@ -52,13 +52,13 @@ public class MultiRangeParams {
     List<byte[]> params = new ArrayList<>();
 
     if (from == null) {
-      params.add("-".getBytes());
+      params.add(RedisTimeSeries.MINUS);
     } else {
       params.add(Protocol.toByteArray(from));
     }
 
     if (to == null) {
-      params.add("+".getBytes());
+      params.add(RedisTimeSeries.PLUS);
     } else {
       params.add(Protocol.toByteArray(to));
     }
