@@ -40,11 +40,21 @@ public class RangeParams {
     return this;
   }
 
-  public byte[][] getByteParams(String key, long from, long to) {
+  public byte[][] getByteParams(String key, Long from, Long to) {
     List<byte[]> params = new ArrayList<>();
     params.add(SafeEncoder.encode(key));
-    params.add(Protocol.toByteArray(from));
-    params.add(Protocol.toByteArray(to));
+
+    if (from == null) {
+      params.add("-".getBytes());
+    } else {
+      params.add(Protocol.toByteArray(from));
+    }
+
+    if (to == null) {
+      params.add("+".getBytes());
+    } else {
+      params.add(Protocol.toByteArray(to));
+    }
 
     if (filterByTimestamps != null) {
       params.add(Keyword.FILTER_BY_TS.getRaw());
