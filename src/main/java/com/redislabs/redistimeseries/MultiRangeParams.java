@@ -7,6 +7,9 @@ import redis.clients.jedis.util.SafeEncoder;
 
 public class MultiRangeParams {
 
+  private long[] filterByTimestamps;
+  private double[] filterByValues;
+
   private Integer count;
 
   private Aggregation aggregationType;
@@ -15,8 +18,20 @@ public class MultiRangeParams {
   private boolean withLabels;
   private String[] selectedLabels;
 
+  private String[] groupByReduce;
+
   public static MultiRangeParams multiRangeParams() {
     return new MultiRangeParams();
+  }
+
+  public MultiRangeParams filterByTS(long... timestamps) {
+    this.filterByTimestamps = timestamps;
+    return this;
+  }
+
+  public MultiRangeParams filterByValues(double min, double max) {
+    this.filterByValues = new double[] {min, max};
+    return this;
   }
 
   public MultiRangeParams count(int count) {
@@ -48,19 +63,38 @@ public class MultiRangeParams {
     return this;
   }
 
+  public MultiRangeParams groupByReduce(String group, String reduce) {
+    this.groupByReduce = new String[] {group, reduce};
+    return this;
+  }
+
   public byte[][] getByteParams(Long from, Long to, String... filters) {
     List<byte[]> params = new ArrayList<>();
 
     if (from == null) {
-      params.add("-".getBytes());
+      params.add(RedisTimeSeries.MINUS);
     } else {
       params.add(Protocol.toByteArray(from));
     }
 
     if (to == null) {
-      params.add("+".getBytes());
+      params.add(RedisTimeSeries.PLUS);
     } else {
       params.add(Protocol.toByteArray(to));
+    }
+
+    if (filterByTimestamps != null) {
+      params.add(Keyword.FILTER_BY_TS.getRaw());
+      for (long ts : filterByTimestamps) {
+        params.add(Protocol.toByteArray(ts));
+      }
+    }
+
+    if (filterByValues != null) {
+      params.add(Keyword.FILTER_BY_VALUE.getRaw());
+      for (double value : filterByValues) {
+        params.add(Protocol.toByteArray(value));
+      }
     }
 
     if (count != null) {
@@ -86,6 +120,13 @@ public class MultiRangeParams {
     params.add(Keyword.FILTER.getRaw());
     for (String filter : filters) {
       params.add(SafeEncoder.encode(filter));
+    }
+
+    if (groupByReduce != null) {
+      params.add(Keyword.GROUPBY.getRaw());
+      params.add(SafeEncoder.encode(groupByReduce[0]));
+      params.add(Keyword.REDUCE.getRaw());
+      params.add(SafeEncoder.encode(groupByReduce[1]));
     }
 
     return params.toArray(new byte[params.size()][]);
