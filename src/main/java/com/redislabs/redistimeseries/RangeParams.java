@@ -33,11 +33,11 @@ public class RangeParams {
   }
 
   public RangeParams alignStart() {
-    return align("start".getBytes());
+    return align(RedisTimeSeries.MINUS);
   }
 
   public RangeParams alignEnd() {
-    return align("end".getBytes());
+    return align(RedisTimeSeries.PLUS);
   }
 
   public RangeParams aggregation(Aggregation aggregation, long timeBucket) {
@@ -51,13 +51,13 @@ public class RangeParams {
     params.add(SafeEncoder.encode(key));
 
     if (from == null) {
-      params.add("-".getBytes());
+      params.add(RedisTimeSeries.MINUS);
     } else {
       params.add(Protocol.toByteArray(from));
     }
 
     if (to == null) {
-      params.add("+".getBytes());
+      params.add(RedisTimeSeries.PLUS);
     } else {
       params.add(Protocol.toByteArray(to));
     }
