@@ -432,41 +432,43 @@ public class RedisTimeSeriesTest {
     }
 
     // RANGE
-    Value[] values = client.range("filterBy", 0, 5000, RangeParams.rangeParams());
+    Value[] values = client.range("filterBy", 0L, 5000L, RangeParams.rangeParams());
     Assert.assertArrayEquals(rawValues, values);
 
-    values = client.range("filterBy", 0, 5000, RangeParams.rangeParams().filterByTS(1000L, 2000L));
+    values =
+        client.range("filterBy", 0L, 5000L, RangeParams.rangeParams().filterByTS(1000L, 2000L));
     Assert.assertArrayEquals(new Value[] {rawValues[0], rawValues[1]}, values);
 
-    values = client.range("filterBy", 0, 5000, RangeParams.rangeParams().filterByValues(1.0, 1.2));
+    values =
+        client.range("filterBy", 0L, 5000L, RangeParams.rangeParams().filterByValues(1.0, 1.2));
     Assert.assertArrayEquals(new Value[] {rawValues[0], rawValues[2]}, values);
 
     values =
         client.range(
             "filterBy",
-            0,
-            5000,
+            0L,
+            5000L,
             RangeParams.rangeParams().filterByTS(1000L, 2000L).filterByValues(1.0, 1.2));
     Assert.assertArrayEquals(new Value[] {rawValues[0]}, values);
 
     // REVRANGE
-    values = client.revrange("filterBy", 0, 5000, RangeParams.rangeParams());
+    values = client.revrange("filterBy", 0L, 5000L, RangeParams.rangeParams());
     Assert.assertArrayEquals(
         new Value[] {rawValues[3], rawValues[2], rawValues[1], rawValues[0]}, values);
 
     values =
-        client.revrange("filterBy", 0, 5000, RangeParams.rangeParams().filterByTS(1000L, 2000L));
+        client.revrange("filterBy", 0L, 5000L, RangeParams.rangeParams().filterByTS(1000L, 2000L));
     Assert.assertArrayEquals(new Value[] {rawValues[1], rawValues[0]}, values);
 
     values =
-        client.revrange("filterBy", 0, 5000, RangeParams.rangeParams().filterByValues(1.0, 1.2));
+        client.revrange("filterBy", 0L, 5000L, RangeParams.rangeParams().filterByValues(1.0, 1.2));
     Assert.assertArrayEquals(new Value[] {rawValues[2], rawValues[0]}, values);
 
     values =
         client.revrange(
             "filterBy",
-            0,
-            5000,
+            0L,
+            5000L,
             RangeParams.rangeParams().filterByTS(1000L, 2000L).filterByValues(1.0, 1.2));
     Assert.assertArrayEquals(new Value[] {rawValues[0]}, values);
   }
@@ -493,7 +495,7 @@ public class RedisTimeSeriesTest {
     client.add("ts1", rawValues[3].getTime(), rawValues[3].getValue());
 
     // MRANGE
-    Range[] range = client.mrange(0, 5000, MultiRangeParams.multiRangeParams(), filter);
+    Range[] range = client.mrange(0L, 5000L, MultiRangeParams.multiRangeParams(), filter);
     assertEquals("ts1", range[0].getKey());
     assertArrayEquals(new Value[] {rawValues[0], rawValues[3]}, range[0].getValues());
     assertEquals("ts2", range[1].getKey());
@@ -501,7 +503,7 @@ public class RedisTimeSeriesTest {
 
     range =
         client.mrange(
-            0, 5000, MultiRangeParams.multiRangeParams().filterByTS(1000L, 2000L), filter);
+            0L, 5000L, MultiRangeParams.multiRangeParams().filterByTS(1000L, 2000L), filter);
     assertEquals("ts1", range[0].getKey());
     assertArrayEquals(new Value[] {rawValues[0]}, range[0].getValues());
     assertEquals("ts2", range[1].getKey());
@@ -509,7 +511,7 @@ public class RedisTimeSeriesTest {
 
     range =
         client.mrange(
-            0, 5000, MultiRangeParams.multiRangeParams().filterByValues(1.0, 1.2), filter);
+            0L, 5000L, MultiRangeParams.multiRangeParams().filterByValues(1.0, 1.2), filter);
     assertEquals("ts1", range[0].getKey());
     assertArrayEquals(new Value[] {rawValues[0]}, range[0].getValues());
     assertEquals("ts2", range[1].getKey());
@@ -517,14 +519,14 @@ public class RedisTimeSeriesTest {
 
     range =
         client.mrange(
-            0,
-            5000,
+            0L,
+            5000L,
             MultiRangeParams.multiRangeParams().filterByTS(1000L, 2000L).filterByValues(1.0, 1.2),
             filter);
     assertArrayEquals(new Value[] {rawValues[0]}, range[0].getValues());
 
     // MREVRANGE
-    range = client.mrevrange(0, 5000, MultiRangeParams.multiRangeParams(), filter);
+    range = client.mrevrange(0L, 5000L, MultiRangeParams.multiRangeParams(), filter);
     assertEquals("ts1", range[0].getKey());
     assertArrayEquals(new Value[] {rawValues[3], rawValues[0]}, range[0].getValues());
     assertEquals("ts2", range[1].getKey());
@@ -532,7 +534,7 @@ public class RedisTimeSeriesTest {
 
     range =
         client.mrevrange(
-            0, 5000, MultiRangeParams.multiRangeParams().filterByTS(1000L, 2000L), filter);
+            0L, 5000L, MultiRangeParams.multiRangeParams().filterByTS(1000L, 2000L), filter);
     assertEquals("ts1", range[0].getKey());
     assertArrayEquals(new Value[] {rawValues[0]}, range[0].getValues());
     assertEquals("ts2", range[1].getKey());
@@ -540,7 +542,7 @@ public class RedisTimeSeriesTest {
 
     range =
         client.mrevrange(
-            0, 5000, MultiRangeParams.multiRangeParams().filterByValues(1.0, 1.2), filter);
+            0L, 5000L, MultiRangeParams.multiRangeParams().filterByValues(1.0, 1.2), filter);
     assertEquals("ts1", range[0].getKey());
     assertArrayEquals(new Value[] {rawValues[0]}, range[0].getValues());
     assertEquals("ts2", range[1].getKey());
@@ -548,8 +550,8 @@ public class RedisTimeSeriesTest {
 
     range =
         client.mrevrange(
-            0,
-            5000,
+            0L,
+            5000L,
             MultiRangeParams.multiRangeParams().filterByTS(1000L, 2000L).filterByValues(1.0, 1.2),
             filter);
     assertArrayEquals(new Value[] {rawValues[0]}, range[0].getValues());
