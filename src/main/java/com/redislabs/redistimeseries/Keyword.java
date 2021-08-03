@@ -17,7 +17,9 @@ public enum Keyword implements ProtocolCommand {
   DUPLICATE_POLICY,
   ON_DUPLICATE,
   FILTER_BY_TS,
-  FILTER_BY_VALUE;
+  FILTER_BY_VALUE,
+  GROUPBY,
+  REDUCE;
 
   private final byte[] raw;
 
