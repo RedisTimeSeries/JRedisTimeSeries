@@ -17,6 +17,7 @@ public enum Keyword implements ProtocolCommand {
   CHUNK_SIZE,
   DUPLICATE_POLICY,
   ON_DUPLICATE,
+  ALIGN,
   FILTER_BY_TS,
   FILTER_BY_VALUE,
   GROUPBY,

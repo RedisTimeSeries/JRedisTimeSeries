@@ -12,6 +12,8 @@ public class RangeParams {
 
   private Integer count;
 
+  private byte[] align;
+
   private Aggregation aggregationType;
   private long timeBucket;
 
@@ -34,6 +36,23 @@ public class RangeParams {
     return this;
   }
 
+  private RangeParams align(byte[] raw) {
+    this.align = raw;
+    return this;
+  }
+
+  public RangeParams align(long timestamp) {
+    return align(Protocol.toByteArray(timestamp));
+  }
+
+  public RangeParams alignStart() {
+    return align(RedisTimeSeries.MINUS);
+  }
+
+  public RangeParams alignEnd() {
+    return align(RedisTimeSeries.PLUS);
+  }
+
   public RangeParams aggregation(Aggregation aggregation, long timeBucket) {
     this.aggregationType = aggregation;
     this.timeBucket = timeBucket;
@@ -45,13 +64,13 @@ public class RangeParams {
     params.add(SafeEncoder.encode(key));
 
     if (from == null) {
-      params.add("-".getBytes());
+      params.add(RedisTimeSeries.MINUS);
     } else {
       params.add(Protocol.toByteArray(from));
     }
 
     if (to == null) {
-      params.add("+".getBytes());
+      params.add(RedisTimeSeries.PLUS);
     } else {
       params.add(Protocol.toByteArray(to));
     }
@@ -73,6 +92,11 @@ public class RangeParams {
     if (count != null) {
       params.add(Keyword.COUNT.getRaw());
       params.add(Protocol.toByteArray(count));
+    }
+
+    if (align != null) {
+      params.add(Keyword.ALIGN.getRaw());
+      params.add(align);
     }
 
     if (aggregationType != null) {

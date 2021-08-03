@@ -417,6 +417,43 @@ public class RedisTimeSeriesTest {
   }
 
   @Test
+  public void align() {
+    client.add("align", 1, 10d);
+    client.add("align", 3, 5d);
+    client.add("align", 11, 10d);
+    client.add("align", 25, 11d);
+
+    Value[] values =
+        client.range(
+            "align", 1L, 30L, RangeParams.rangeParams().aggregation(Aggregation.COUNT, 10));
+    assertArrayEquals(new Value[] {new Value(1, 2), new Value(11, 1), new Value(21, 1)}, values);
+
+    values =
+        client.range(
+            "align",
+            1L,
+            30L,
+            RangeParams.rangeParams().alignStart().aggregation(Aggregation.COUNT, 10));
+    assertArrayEquals(new Value[] {new Value(1, 2), new Value(11, 1), new Value(21, 1)}, values);
+
+    values =
+        client.range(
+            "align",
+            1L,
+            30L,
+            RangeParams.rangeParams().alignEnd().aggregation(Aggregation.COUNT, 10));
+    assertArrayEquals(new Value[] {new Value(1, 2), new Value(11, 1), new Value(21, 1)}, values);
+
+    values =
+        client.range(
+            "align",
+            1L,
+            30L,
+            RangeParams.rangeParams().align(5).aggregation(Aggregation.COUNT, 10));
+    assertArrayEquals(new Value[] {new Value(1, 2), new Value(11, 1), new Value(21, 1)}, values);
+  }
+
+  @Test
   public void rangeFilterBy() {
 
     Value[] rawValues =
