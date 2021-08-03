@@ -417,6 +417,44 @@ public class RedisTimeSeriesTest {
   }
 
   @Test
+  public void groupByReduce() {
+    client.create("ts1", convertMap("metric", "cpu", "metric_name", "system"));
+    client.create("ts2", convertMap("metric", "cpu", "metric_name", "user"));
+
+    client.add("ts1", 1L, 90.0);
+    client.add("ts1", 2L, 45.0);
+    client.add("ts2", 2L, 99.0);
+
+    Range[] range =
+        client.mrange(
+            0L,
+            100L,
+            MultiRangeParams.multiRangeParams().withLabels().groupByReduce("metric_name", "max"),
+            "metric=cpu");
+    assertEquals(2, range.length);
+
+    assertEquals("metric_name=system", range[0].getKey());
+    assertEquals("system", range[0].getLabels().get("metric_name"));
+    assertEquals("max", range[0].getLabels().get("__reducer__"));
+    assertEquals("ts1", range[0].getLabels().get("__source__"));
+    assertArrayEquals(new Value[] {new Value(1, 90), new Value(2, 45)}, range[0].getValues());
+
+    assertEquals("metric_name=user", range[1].getKey());
+    assertEquals("user", range[1].getLabels().get("metric_name"));
+    assertEquals("max", range[1].getLabels().get("__reducer__"));
+    assertEquals("ts2", range[1].getLabels().get("__source__"));
+    assertArrayEquals(new Value[] {new Value(2, 99)}, range[1].getValues());
+  }
+
+  private Map<String, String> convertMap(String... array) {
+    Map<String, String> map = new HashMap<>(array.length / 2);
+    for (int i = 0; i < array.length; i += 2) {
+      map.put(array[i], array[i + 1]);
+    }
+    return map;
+  }
+
+  @Test
   public void testGet() {
 
     // Test for empty result none existing series
