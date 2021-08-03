@@ -142,6 +142,8 @@ public class RedisTimeSeriesTest {
     labels.put("l1", "v1");
     labels.put("l2", "v2");
     Assert.assertTrue(client.create("seriesAdd", 10000L /*retentionTime*/, labels));
+    assertArrayEquals(
+        new Value[0], client.range("seriesAdd", null, null, RangeParams.rangeParams()));
 
     Assert.assertEquals(1000L, client.add("seriesAdd", 1000L, 1.1, 10000, null));
     Assert.assertEquals(2000L, client.add("seriesAdd", 2000L, 0.9, (Map<String, String>) null));
@@ -161,6 +163,7 @@ public class RedisTimeSeriesTest {
     values = client.range("seriesAdd", 800L, 5000L);
     Assert.assertEquals(4, values.length);
     Assert.assertArrayEquals(rawValues, values);
+    assertArrayEquals(rawValues, client.range("seriesAdd", null, null, RangeParams.rangeParams()));
 
     Value[] expectedCountValues =
         new Value[] {new Value(2000L, 1), new Value(3200L, 1), new Value(4500L, 1)};
@@ -194,6 +197,9 @@ public class RedisTimeSeriesTest {
     Assert.assertEquals(1, values.length);
     Assert.assertArrayEquals(expectedOverallMaxValues, values);
 
+    // MRANGE
+    assertArrayEquals(
+        new Range[0], client.mrange(null, null, MultiRangeParams.multiRangeParams(), "l=v"));
     try {
       client.mrange(500L, 4600L, Aggregation.COUNT, 1);
       Assert.fail();
@@ -584,6 +590,8 @@ public class RedisTimeSeriesTest {
     labels.put("l1", "v1");
     labels.put("l2", "v2");
     Assert.assertTrue(client.create("seriesAdd", 10000L /*retentionTime*/, labels));
+    assertArrayEquals(
+        new Value[0], client.revrange("seriesAdd", null, null, RangeParams.rangeParams()));
 
     Assert.assertEquals(1000L, client.add("seriesRevRange", 1000L, 1.1, 10000, null));
     Assert.assertEquals(
@@ -604,6 +612,8 @@ public class RedisTimeSeriesTest {
     values = client.revrange("seriesRevRange", 800L, 5000L);
     Assert.assertEquals(4, values.length);
     Assert.assertArrayEquals(rawValues, values);
+    assertArrayEquals(
+        rawValues, client.revrange("seriesRevRange", null, null, RangeParams.rangeParams()));
 
     Value[] expectedCountValues =
         new Value[] {new Value(4500L, 1), new Value(3200L, 1), new Value(2000L, 1)};
@@ -621,6 +631,8 @@ public class RedisTimeSeriesTest {
   @Test
   public void testMRevRange() {
     if (moduleVersion < 10300) return;
+    assertArrayEquals(
+        new Range[0], client.mrevrange(null, null, MultiRangeParams.multiRangeParams(), "l=v"));
 
     Map<String, String> labels1 = new HashMap<>();
     labels1.put("l3", "v3");

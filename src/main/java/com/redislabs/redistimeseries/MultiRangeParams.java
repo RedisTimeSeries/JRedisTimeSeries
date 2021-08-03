@@ -41,10 +41,20 @@ public class MultiRangeParams {
     return this;
   }
 
-  public byte[][] getByteParams(long from, long to, String... filters) {
+  public byte[][] getByteParams(Long from, Long to, String... filters) {
     List<byte[]> params = new ArrayList<>();
-    params.add(Protocol.toByteArray(from));
-    params.add(Protocol.toByteArray(to));
+
+    if (from == null) {
+      params.add("-".getBytes());
+    } else {
+      params.add(Protocol.toByteArray(from));
+    }
+
+    if (to == null) {
+      params.add("+".getBytes());
+    } else {
+      params.add(Protocol.toByteArray(to));
+    }
 
     if (count != null) {
       params.add(Keyword.COUNT.getRaw());
