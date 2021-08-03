@@ -424,28 +424,32 @@ public class RedisTimeSeriesTest {
     client.add("align", 25, 11d);
 
     Value[] values =
-        client.range("align", 1, 30, RangeParams.rangeParams().aggregation(Aggregation.COUNT, 10));
+        client.range(
+            "align", 1L, 30L, RangeParams.rangeParams().aggregation(Aggregation.COUNT, 10));
     assertArrayEquals(new Value[] {new Value(1, 2), new Value(11, 1), new Value(21, 1)}, values);
 
     values =
         client.range(
             "align",
-            1,
-            30,
+            1L,
+            30L,
             RangeParams.rangeParams().alignStart().aggregation(Aggregation.COUNT, 10));
     assertArrayEquals(new Value[] {new Value(1, 2), new Value(11, 1), new Value(21, 1)}, values);
 
     values =
         client.range(
             "align",
-            1,
-            30,
+            1L,
+            30L,
             RangeParams.rangeParams().alignEnd().aggregation(Aggregation.COUNT, 10));
     assertArrayEquals(new Value[] {new Value(1, 2), new Value(11, 1), new Value(21, 1)}, values);
 
     values =
         client.range(
-            "align", 1, 30, RangeParams.rangeParams().align(5).aggregation(Aggregation.COUNT, 10));
+            "align",
+            1L,
+            30L,
+            RangeParams.rangeParams().align(5).aggregation(Aggregation.COUNT, 10));
     assertArrayEquals(new Value[] {new Value(1, 2), new Value(11, 1), new Value(21, 1)}, values);
   }
 
