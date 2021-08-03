@@ -595,6 +595,48 @@ public class RedisTimeSeriesTest {
   }
 
   @Test
+  public void mrangeSelectedLabels() {
+
+    client.create("ts1", convertMap("l1", "v1", "l2", "v2"));
+    client.create("ts2", convertMap("l1", "v1", "l3", "v3"));
+
+    Value[] rawValues =
+        new Value[] {
+          new Value(1000L, 1.0),
+          new Value(2000L, 0.9),
+          new Value(3200L, 1.1),
+          new Value(4500L, -1.1)
+        };
+
+    client.add("ts1", rawValues[0].getTime(), rawValues[0].getValue());
+    client.add("ts2", rawValues[1].getTime(), rawValues[1].getValue());
+    client.add("ts2", rawValues[2].getTime(), rawValues[2].getValue());
+    client.add("ts1", rawValues[3].getTime(), rawValues[3].getValue());
+
+    Range[] range =
+        client.mrange(0L, 5000L, MultiRangeParams.multiRangeParams().withLabels(), "l1=v1");
+    assertEquals(2, range.length);
+    assertEquals("ts1", range[0].getKey());
+    assertEquals(2, range[0].getLabels().size());
+    assertEquals("ts2", range[1].getKey());
+    assertEquals(2, range[1].getLabels().size());
+
+    range =
+        client.mrange(
+            0L, 5000L, MultiRangeParams.multiRangeParams().selectedLabels("l1", "l2"), "l1=v1");
+    assertEquals(2, range.length);
+    assertEquals("ts1", range[0].getKey());
+    assertEquals(2, range[0].getLabels().size());
+    assertEquals("ts2", range[1].getKey());
+    assertEquals(1, range[1].getLabels().size());
+
+    range =
+        client.mrange(0L, 5000L, MultiRangeParams.multiRangeParams().selectedLabels("l3"), "l2=v2");
+    assertEquals(1, range.length);
+    assertEquals(0, range[0].getLabels().size());
+  }
+
+  @Test
   public void groupByReduce() {
     client.create("ts1", convertMap("metric", "cpu", "metric_name", "system"));
     client.create("ts2", convertMap("metric", "cpu", "metric_name", "user"));
