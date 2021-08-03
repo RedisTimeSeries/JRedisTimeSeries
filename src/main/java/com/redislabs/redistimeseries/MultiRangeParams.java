@@ -74,13 +74,13 @@ public class MultiRangeParams {
       params.add(Protocol.toByteArray(timeBucket));
     }
 
-    if (withLabels) {
-      params.add(Keyword.WITHLABELS.getRaw());
-    } else if (selectedLabels != null) {
+    if (selectedLabels != null) {
       params.add(Keyword.SELECTED_LABELS.getRaw());
       for (String label : selectedLabels) {
         params.add(SafeEncoder.encode(label));
       }
+    } else if (withLabels) {
+      params.add(Keyword.WITHLABELS.getRaw());
     }
 
     params.add(Keyword.FILTER.getRaw());
