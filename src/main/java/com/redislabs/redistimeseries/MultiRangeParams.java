@@ -42,7 +42,7 @@ public class MultiRangeParams {
     return this;
   }
 
-  /** WARNING: SELECTED_LABELS and WITHLABELS are mutually exclusive. */
+  /** NOTE: SELECTED_LABELS and WITHLABELS are mutually exclusive. */
   public MultiRangeParams selectedLabels(String... labels) {
     this.selectedLabels = labels;
     return this;
