@@ -13,6 +13,10 @@
 
 Java Client for RedisTimeSeries
 
+## Deprecation notice
+
+As of [Jedis 4.2.0](https://github.com/redis/jedis), this library is deprecated. Its features have been merged into Jedis. Please install it either [from maven](https://mvnrepository.com/artifact/redis.clients/jedis) or [the repo](https://github.com/redis/jedis).
+
 ### Official Releases
 
 ```xml
