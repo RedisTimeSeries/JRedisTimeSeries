@@ -104,17 +104,19 @@ public class Range {
     int i = 0;
     args[i++] = Protocol.toByteArray(from);
     args[i++] = Protocol.toByteArray(to);
-    if (aggregation != null) {
-      args[i++] = Keyword.AGGREGATION.getRaw();
-      args[i++] = aggregation.getRaw();
-      args[i++] = Protocol.toByteArray(timeBucket);
-    }
+
     if (withLabels) {
       args[i++] = Keyword.WITHLABELS.getRaw();
     }
     if (count != null) {
       args[i++] = Keyword.COUNT.getRaw();
       args[i++] = Protocol.toByteArray(count.intValue());
+    }
+
+    if (aggregation != null) {
+      args[i++] = Keyword.AGGREGATION.getRaw();
+      args[i++] = aggregation.getRaw();
+      args[i++] = Protocol.toByteArray(timeBucket);
     }
 
     if (filters != null) {
