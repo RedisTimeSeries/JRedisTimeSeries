@@ -1,5 +1,4 @@
 [![license](https://img.shields.io/github/license/RedisTimeSeries/JRedisTimeSeries.svg)](https://github.com/RedisTimeSeries/JRedisTimeSeries)
-[![CircleCI](https://circleci.com/gh/RedisTimeSeries/JRedisTimeSeries/tree/master.svg?style=svg)](https://circleci.com/gh/RedisTimeSeries/JRedisTimeSeries/tree/master)
 [![GitHub issues](https://img.shields.io/github/release/RedisTimeSeries/JRedisTimeSeries.svg)](https://github.com/RedisTimeSeries/JRedisTimeSeries/releases/latest)
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.redislabs/jredistimeseries/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.redislabs/jredistimeseries)
 [![Javadocs](https://www.javadoc.io/badge/com.redislabs/jredistimeseries.svg)](https://www.javadoc.io/doc/com.redislabs/jredistimeseries)
@@ -57,17 +56,17 @@ and
 
 ```java
    RedisTimeSeries rts = new RedisTimeSeries("localhost", 6379);
-   
+
    Map<String, String> labels = new HashMap<>();
    labels.put("country", "US");
-   labels.put("cores", "8"); 
+   labels.put("cores", "8");
    rts.create("cpu1", 60*10 /*10min*/, labels);
-   
+
    rts.create("cpu1-avg", 60*10 /*10min*/, null);
    rts.createRule("cpu1", Aggregation.AVG, 60 /*1min*/, "cpu1-avg");
-   
+
    rts.add("cpu1", System.currentTimeMillis()/1000 /* time sec */, 80.0);
-   
-   // Get all the timeseries in US in the last 10min average per min  
+
+   // Get all the timeseries in US in the last 10min average per min
    rts.mrange(System.currentTimeMillis()/1000 - 10*60, System.currentTimeMillis()/1000, Aggregation.AVG, 60, "country=US")
 ```
